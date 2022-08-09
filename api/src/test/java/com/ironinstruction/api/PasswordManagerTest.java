@@ -8,14 +8,14 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
 public class PasswordManagerTest {
-    private static PasswordManager manager = new PasswordManager();
+    private static final PasswordManager manager = new PasswordManager();
 
     private static void testHash() {
         String password = "hello";
 
         try {
-            byte[] saltOne = manager.createSalt();
-            byte[] saltTwo = manager.createSalt();
+            String saltOne = manager.createSalt();
+            String saltTwo = manager.createSalt();
             String hashOne = manager.hash(password, saltOne);
             String hashTwo = manager.hash(password, saltTwo);
             System.out.println("Two identical passwords are different hashes: " + !hashOne.equals(hashTwo));
@@ -28,11 +28,23 @@ public class PasswordManagerTest {
         String password = "hello";
 
         try {
-            byte[] salt = manager.createSalt();
-            String storedSalt = HexUtils.toHexString(salt); // simulate storing a salt as hex in db
+            String salt = manager.createSalt();
             String hash = manager.hash(password, salt);
-            String duplicateHash = manager.hash(password, DatatypeConverter.parseHexBinary(storedSalt)); // then parse db stored salt
+            String duplicateHash = manager.hash(password, salt);
             System.out.println("Passwords can be validated: " + hash.equals(duplicateHash));
+        } catch(NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void testInvalidation() {
+        String password = "hello";
+        String incorrectPassword = "nothello";
+        try {
+            String salt = manager.createSalt();
+            String hash = manager.hash(password, salt);
+            String incorrectHash = manager.hash(incorrectPassword, salt);
+            System.out.println("Passwords can be invalidated: " + !incorrectHash.equals(hash));
         } catch(NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
@@ -41,5 +53,6 @@ public class PasswordManagerTest {
     public static void main(String[] args) {
         testHash();
         testValidation();
+        testInvalidation();
     }
 }

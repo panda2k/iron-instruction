@@ -7,7 +7,6 @@ import javax.crypto.spec.PBEKeySpec;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 
 public class PasswordManager {
     private final int strength;
@@ -22,25 +21,26 @@ public class PasswordManager {
         this.keyLength = keyLength;
     }
 
-    public String hash(String password, byte[] salt) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, this.strength,this.keyLength);
+    public String hash(String password, String salt) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        byte[] saltBytes = HexUtils.fromHexString(salt);
+        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), saltBytes, this.strength,this.keyLength);
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
         return HexUtils.toHexString(factory.generateSecret(spec).getEncoded()); // I don't see any point in returning the byte array for now
     }
 
-    public byte[] createSalt(int size) {
+    public String createSalt(int size) {
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[size];
         random.nextBytes(salt);
 
-        return salt;
+        return HexUtils.toHexString(salt);
     }
 
-    public byte[] createSalt() {
+    public String createSalt() {
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[16];
         random.nextBytes(salt);
 
-        return salt;
+        return HexUtils.toHexString(salt);
     }
 }
