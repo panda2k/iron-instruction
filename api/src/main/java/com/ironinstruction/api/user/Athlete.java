@@ -9,14 +9,18 @@ import java.util.ArrayList;
 public class Athlete extends User {
     private String weightClass;
     private float weight;
-    private final LocalDate dob;
+    private LocalDate dob;
     private float squatMax;
     private float benchMax;
     private float deadliftMax;
     private float height;
 
-    public Athlete(String name, String email, String passwordHash, String passwordSalt, UserType userType, String weightClass, float weight, LocalDate dob, float squatMax, float benchMax, float deadliftMax, float height) {
-        super(name, email, passwordHash, passwordSalt, userType);
+    public Athlete(String name, String email, String passwordHash, String passwordSalt) {
+        super(name, email, passwordHash, passwordSalt, UserType.ATHLETE);
+    }
+
+    public Athlete(String name, String email, String passwordHash, String passwordSalt, String weightClass, float weight, LocalDate dob, float squatMax, float benchMax, float deadliftMax, float height) {
+        super(name, email, passwordHash, passwordSalt, UserType.ATHLETE);
         this.weightClass = weightClass;
         this.weight = weight;
         this.dob = dob;

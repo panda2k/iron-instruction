@@ -10,8 +10,8 @@ public class Coach extends User {
     private ArrayList<Program> programs;
     private ArrayList<String> athleteEmails;
 
-    public Coach(String name, String email, String passwordHash, String passwordSalt, UserType userType) {
-        super(name, email, passwordHash, passwordSalt, userType);
+    public Coach(String name, String email, String passwordHash, String passwordSalt) {
+        super(name, email, passwordHash, passwordSalt, UserType.COACH);
         this.programs = new ArrayList<Program>();
         this.athleteEmails = new ArrayList<String>();
     }
