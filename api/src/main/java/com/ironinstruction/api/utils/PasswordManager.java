@@ -1,6 +1,7 @@
 package com.ironinstruction.api.utils;
 
 import org.apache.tomcat.util.buf.HexUtils;
+import org.springframework.context.annotation.Bean;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;

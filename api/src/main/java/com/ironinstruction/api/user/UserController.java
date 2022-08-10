@@ -1,10 +1,8 @@
 package com.ironinstruction.api.user;
 
 import com.ironinstruction.api.errors.DuplicateEmail;
-import com.ironinstruction.api.errors.InvalidAuthentication;
 import com.ironinstruction.api.errors.ResourceNotFound;
 import com.ironinstruction.api.requests.CreateUserRequest;
-import com.ironinstruction.api.requests.LoginRequest;
 import com.ironinstruction.api.errors.ErrorResponse;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -38,13 +36,6 @@ public class UserController {
     }
 
     @ResponseBody
-    @ResponseStatus(value=HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler(InvalidAuthentication.class)
-    public ErrorResponse loginError() {
-        return new ErrorResponse("Failed authentication");
-    }
-
-    @ResponseBody
     @ResponseStatus(value=HttpStatus.BAD_REQUEST)
     @ExceptionHandler(DuplicateEmail.class)
     public ErrorResponse duplicateEmail(DuplicateEmail e) {
@@ -61,12 +52,8 @@ public class UserController {
         }
     }
 
-    @PostMapping("/login")
-    public User loginUser(@RequestBody LoginRequest loginRequest) throws InvalidAuthentication, NoSuchAlgorithmException, InvalidKeySpecException, ResourceNotFound {
-        try {
-            return userService.login(loginRequest.getEmail(), loginRequest.getPassword());
-        } catch (NoSuchElementException e) {
-            throw new ResourceNotFound(loginRequest.getEmail());
-        }
+    @GetMapping("/{email}")
+    public User getUser(@PathVariable String email) {
+        return userService.findUserByEmail(email);
     }
 }

@@ -1,6 +1,5 @@
 package com.ironinstruction.api.user;
 
-import com.ironinstruction.api.errors.InvalidAuthentication;
 import com.ironinstruction.api.utils.PasswordManager;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +11,6 @@ import java.util.NoSuchElementException;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordManager passwordManager;
-
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -31,17 +29,6 @@ public class UserService {
             return userRepository.insert(new Athlete(name, email, hash, salt));
         } else {
             return userRepository.insert(new Coach(name, email, hash, salt));
-        }
-    }
-
-    public User login(String email, String password) throws NoSuchElementException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidAuthentication {
-        User user = findUserByEmail(email);
-
-        final String loginHash = passwordManager.hash(password, user.getPasswordSalt());
-        if (loginHash.equals(user.getPasswordHash())) {
-            return user;
-        } else {
-            throw new InvalidAuthentication("Invalid password");
         }
     }
 }
