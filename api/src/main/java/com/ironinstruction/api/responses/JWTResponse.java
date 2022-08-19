@@ -1,22 +1,16 @@
 package com.ironinstruction.api.responses;
 
 public class JWTResponse {
-    private final String token;
-    private final long expirationTimestamp;
+    private final String accessToken;
     private final String refreshToken;
 
-    public JWTResponse(String token, long expirationTimestamp, String refreshToken) {
-        this.token = token;
-        this.expirationTimestamp = expirationTimestamp;
+    public JWTResponse(String accessToken, String refreshToken)  {
+        this.accessToken = accessToken;
         this.refreshToken = refreshToken;
     }
 
-    public String getToken() {
-        return token;
-    }
-
-    public long getExpirationTimestamp() {
-        return expirationTimestamp;
+    public String getAccessToken() {
+        return accessToken;
     }
 
     public String getRefreshToken() {

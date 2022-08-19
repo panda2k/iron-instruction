@@ -15,6 +15,8 @@ public abstract class User {
     private String passwordSalt;
     private UserType userType;
 
+    protected User() { }
+
     public User(String name, String email, String passwordHash, String passwordSalt, UserType userType) {
         this.name = name;
         this.email = email;

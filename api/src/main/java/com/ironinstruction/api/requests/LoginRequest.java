@@ -7,6 +7,11 @@ public class LoginRequest {
     // empty constructor for jackson to cast json body to object
     public LoginRequest() {}
 
+    public LoginRequest(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
+
     public void setEmail(String email) {
         this.email = email;
     }

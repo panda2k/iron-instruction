@@ -31,4 +31,9 @@ public class UserService {
             return userRepository.insert(new Coach(name, email, hash, salt));
         }
     }
+
+    public void deleteUserByEmail(String email) {
+        userRepository.deleteByEmail(email);
+        return;
+    }
 }

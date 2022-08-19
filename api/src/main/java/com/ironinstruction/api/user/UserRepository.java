@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface UserRepository extends MongoRepository<User, String> {
     // use optional because it is not guaranteed that an athlete will be found
     Optional<User> findByEmail(String email);
+    void deleteByEmail(String email);
 }

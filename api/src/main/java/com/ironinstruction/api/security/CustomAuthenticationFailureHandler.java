@@ -5,6 +5,8 @@ import com.ironinstruction.api.errors.AccessDenied;
 import com.ironinstruction.api.errors.ErrorResponse;
 import com.ironinstruction.api.errors.InvalidEmail;
 import com.ironinstruction.api.errors.InvalidToken;
+
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 
@@ -23,6 +25,8 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
         } else if (exception instanceof InvalidEmail) { // could group the following two if statements together but will leave them separate for now
             response.setStatus(400);
         } else if (exception instanceof InvalidToken) {
+            response.setStatus(400);
+        } else if (exception instanceof BadCredentialsException) {
             response.setStatus(400);
         }
         response.getWriter().write(new ObjectMapper().writeValueAsString(new ErrorResponse(exception.getMessage())));

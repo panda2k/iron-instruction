@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -20,7 +19,7 @@ public class UserController {
     public UserController(UserService userService) {
         this.userService = userService;
     }
-
+	
     @ResponseBody
     @ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler({NoSuchAlgorithmException.class, InvalidKeySpecException.class})
@@ -41,7 +40,6 @@ public class UserController {
     public ErrorResponse duplicateEmail(DuplicateEmail e) {
         return new ErrorResponse("Account with email '" + e.getEmail() + "' already exists");
     }
-
     // POST /users
     @PostMapping
     public User createUser(@RequestBody CreateUserRequest createUserRequest) throws NoSuchAlgorithmException, InvalidKeySpecException, DuplicateEmail {
@@ -51,9 +49,13 @@ public class UserController {
             throw new DuplicateEmail(createUserRequest.getEmail());
         }
     }
-
+	
     @GetMapping("/{email}")
     public User getUser(@PathVariable String email) {
         return userService.findUserByEmail(email);
     }
+    /*
+	@PostMapping 
+	public User updateUserInfo() {
+    }*/
 }

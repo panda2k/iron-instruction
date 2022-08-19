@@ -1,16 +1,21 @@
 package com.ironinstruction.api;
 
 import com.ironinstruction.api.utils.PasswordManager;
-import org.apache.tomcat.util.buf.HexUtils;
 
-import javax.xml.bind.DatatypeConverter;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
-public class PasswordManagerTest {
+@SpringBootTest
+public class PasswordManagerTests {
     private static final PasswordManager manager = new PasswordManager();
-
-    private static void testHash() {
+    
+    @Test
+    public void testHash() throws Exception {
         String password = "hello";
 
         try {
@@ -18,41 +23,37 @@ public class PasswordManagerTest {
             String saltTwo = manager.createSalt();
             String hashOne = manager.hash(password, saltOne);
             String hashTwo = manager.hash(password, saltTwo);
-            System.out.println("Two identical passwords are different hashes: " + !hashOne.equals(hashTwo));
+            assertTrue(!hashOne.equals(hashTwo));
     } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static void testValidation() {
+    @Test
+    public void testValidation() throws Exception {
         String password = "hello";
 
         try {
             String salt = manager.createSalt();
             String hash = manager.hash(password, salt);
             String duplicateHash = manager.hash(password, salt);
-            System.out.println("Passwords can be validated: " + hash.equals(duplicateHash));
+            assertTrue(hash.equals(duplicateHash));
         } catch(NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static void testInvalidation() {
+    @Test
+    public void testInvalidation() throws Exception {
         String password = "hello";
         String incorrectPassword = "nothello";
         try {
             String salt = manager.createSalt();
             String hash = manager.hash(password, salt);
             String incorrectHash = manager.hash(incorrectPassword, salt);
-            System.out.println("Passwords can be invalidated: " + !incorrectHash.equals(hash));
+            assertTrue(!incorrectHash.equals(hash));
         } catch(NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static void main(String[] args) {
-        testHash();
-        testValidation();
-        testInvalidation();
     }
 }

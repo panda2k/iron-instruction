@@ -1,12 +1,10 @@
 package com.ironinstruction.api.security;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.auth0.jwt.exceptions.SignatureVerificationException;
-import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.ironinstruction.api.errors.AccessDenied;
 import com.ironinstruction.api.errors.InvalidToken;
+import com.ironinstruction.api.utils.TokenManager;
+import com.ironinstruction.api.utils.TokenType;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -24,6 +22,8 @@ import java.util.regex.Pattern;
 
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     private AuthenticationFailureHandler failureHandler;
+    
+
     public JWTAuthorizationFilter(AuthenticationManager authenticationManager, AuthenticationFailureHandler failureHandler) {
         super(authenticationManager);
         this.failureHandler = failureHandler;
@@ -31,15 +31,17 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        return (request.getServletPath().equals(SecurityConstants.SIGN_UP_URL) || request.getServletPath().equals(SecurityConstants.LOGIN_URL)) && request.getMethod().equals("POST");
+        // for some reason getServletPath doesn't work in the test cases so 
+        // get path from request uri instead
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        return ((path.equals(SecurityConstants.REFRESH_URL)) || path.equals(SecurityConstants.SIGN_UP_URL) || path.equals(SecurityConstants.LOGIN_URL)) && request.getMethod().equals("POST");
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         String header = request.getHeader(SecurityConstants.HEADER_STRING);
-
         if (header == null || !header.startsWith(SecurityConstants.TOKEN_PREFIX)) {
-            this.failureHandler.onAuthenticationFailure(request, response, new InvalidToken("No token supplied"));
+            this.failureHandler.onAuthenticationFailure(request, response, new InvalidToken("No token supplied "));
             return;
         }
         try {
@@ -52,20 +54,15 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     }
 
     private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
-        String token = request.getHeader(SecurityConstants.HEADER_STRING);
+        String token = request
+            .getHeader(SecurityConstants.HEADER_STRING)
+            .replace(SecurityConstants.TOKEN_PREFIX, "")
+            .replaceAll(" ", "");
 
         if (token != null) {
             String userEmail;
-            try {
-                userEmail = JWT.require(Algorithm.HMAC512(SecurityConstants.SECRET.getBytes()))
-                        .build()
-                        .verify(token.replace(SecurityConstants.TOKEN_PREFIX, "").replaceAll(" ", ""))
-                        .getSubject();
-            } catch (JWTDecodeException | SignatureVerificationException e) {
-                throw new InvalidToken("Invalid token");
-            } catch (TokenExpiredException e) {
-                throw new InvalidToken("Token expired");
-            }
+            // token manager throws appropriate errors if failed decode
+            userEmail = TokenManager.verifyJWT(token, TokenType.ACCESS).getSubject();
 
             if (userEmail != null) {
                 // if they are requesting a user's specific info, make sure they are that user

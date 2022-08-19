@@ -1,10 +1,13 @@
 package com.ironinstruction.api.security;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ironinstruction.api.refreshtoken.RefreshToken;
+import com.ironinstruction.api.refreshtoken.RefreshTokenService;
 import com.ironinstruction.api.requests.LoginRequest;
 import com.ironinstruction.api.responses.JWTResponse;
+import com.ironinstruction.api.utils.TokenManager;
+import com.ironinstruction.api.utils.TokenType;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -16,14 +19,16 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Date;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private CustomAuthenticationManager authenticationManager;
+    private RefreshTokenService refreshTokenService; 
 
-    public JWTAuthenticationFilter(CustomAuthenticationManager authenticationManager, AuthenticationFailureHandler failureHandler) {
+    public JWTAuthenticationFilter(CustomAuthenticationManager authenticationManager, AuthenticationFailureHandler failureHandler, RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
-        setFilterProcessesUrl("/api/v1/login"); // for some reason this doesn't work as intended
+        this.refreshTokenService = refreshTokenService;
+        // doesn't lock the filter to the specified url
+        setFilterProcessesUrl("/api/v1/login"); // for some reason this doesn't work as intended, or I misunderstand its use
         setAuthenticationFailureHandler(failureHandler);
     }
 
@@ -43,14 +48,13 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        // create JWT token with 15 minute expiration time
-        Date expirationTime = new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME);
-        String token = JWT.create()
-                .withSubject((String) authResult.getPrincipal())
-                .withExpiresAt(expirationTime)
-                .sign(Algorithm.HMAC512(SecurityConstants.SECRET.getBytes()));
+        // create JWT access token 
+        String accessToken = TokenManager.generateJWT((String) authResult.getPrincipal(), TokenType.ACCESS);
 
-        JWTResponse body = new JWTResponse(token, expirationTime.getTime(), "");
+        // create JWT refresh token 
+        RefreshToken refreshToken = new RefreshToken(TokenManager.generateJWT((String) authResult.getPrincipal(), TokenType.REFRESH));
+        refreshTokenService.saveRefreshToken(refreshToken);
+        JWTResponse body = new JWTResponse(accessToken, refreshToken.getToken());
         response.setContentType("application/json");
         response.getWriter().write(new ObjectMapper().writeValueAsString(body));
         response.getWriter().flush(); // commits the response written above

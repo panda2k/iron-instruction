@@ -3,7 +3,6 @@ package com.ironinstruction.api.user;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 
 @Document(collection = "users")
 public class Athlete extends User {
@@ -15,6 +14,9 @@ public class Athlete extends User {
     private float deadliftMax;
     private float height;
 
+    protected Athlete() {
+        super();
+    }
     public Athlete(String name, String email, String passwordHash, String passwordSalt) {
         super(name, email, passwordHash, passwordSalt, UserType.ATHLETE);
     }

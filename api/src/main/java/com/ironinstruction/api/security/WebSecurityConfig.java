@@ -1,5 +1,6 @@
 package com.ironinstruction.api.security;
 
+import com.ironinstruction.api.refreshtoken.RefreshTokenService;
 import com.ironinstruction.api.user.UserService;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -14,10 +15,10 @@ public class WebSecurityConfig {
     // I'm unsure whether it is safe to have security beans outside of security chain. will research further
     // but for now this is a fine solution
     @Bean
-    public FilterRegistrationBean<JWTAuthenticationFilter> authenticationFilter(UserService userService) {
+    public FilterRegistrationBean<JWTAuthenticationFilter> authenticationFilter(UserService userService, RefreshTokenService refreshTokenService) {
         CustomAuthenticationManager authenticationManager = new CustomAuthenticationManager(userService);
         FilterRegistrationBean<JWTAuthenticationFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(new JWTAuthenticationFilter(authenticationManager, failureHandler));
+        registrationBean.setFilter(new JWTAuthenticationFilter(authenticationManager, failureHandler, refreshTokenService));
         registrationBean.addUrlPatterns("/api/v1/login");
         registrationBean.setOrder(1);
 
