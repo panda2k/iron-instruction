@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Date;
 import java.util.NoSuchElementException;
 
 @Service
@@ -35,5 +36,20 @@ public class UserService {
     public void deleteUserByEmail(String email) {
         userRepository.deleteByEmail(email);
         return;
+    }
+
+    public Athlete updateAthleteInfoByEmail(String email, String weightClass, float weight, Date dob, float squatMax, float benchMax, float deadliftMax, float height) throws NoSuchElementException {
+        Athlete user = (Athlete) findUserByEmail(email); 
+         
+        user.setWeightClass(weightClass);
+        user.setWeight(weight);
+        user.setDob(dob);
+        user.setSquatMax(squatMax);
+        user.setBenchMax(benchMax);
+        user.setDeadliftMax(deadliftMax);
+        user.setHeight(height);
+
+        userRepository.save(user);
+        return user;
     }
 }

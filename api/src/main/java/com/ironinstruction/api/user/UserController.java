@@ -3,6 +3,7 @@ package com.ironinstruction.api.user;
 import com.ironinstruction.api.errors.DuplicateEmail;
 import com.ironinstruction.api.errors.ResourceNotFound;
 import com.ironinstruction.api.requests.CreateUserRequest;
+import com.ironinstruction.api.requests.UpdateAthleteRequest;
 import com.ironinstruction.api.errors.ErrorResponse;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -54,8 +55,18 @@ public class UserController {
     public User getUser(@PathVariable String email) {
         return userService.findUserByEmail(email);
     }
-    /*
-	@PostMapping 
-	public User updateUserInfo() {
-    }*/
+
+    @PostMapping("/{email}")
+	public Athlete updateAthleteInfo(@PathVariable String email, @RequestBody UpdateAthleteRequest request) {
+        return userService.updateAthleteInfoByEmail(
+            email, 
+            request.getWeightClass(),
+            request.getWeight(),
+            request.getDob(),
+            request.getSquatMax(),
+            request.getBenchMax(),
+            request.getDeadliftMax(),
+            request.getHeight()
+        );
+    }
 }

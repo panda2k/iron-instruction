@@ -3,12 +3,13 @@ package com.ironinstruction.api.user;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
+import java.util.Date;
 
 @Document(collection = "users")
 public class Athlete extends User {
     private String weightClass;
     private float weight;
-    private LocalDate dob;
+    private Date dob;
     private float squatMax;
     private float benchMax;
     private float deadliftMax;
@@ -21,7 +22,7 @@ public class Athlete extends User {
         super(name, email, passwordHash, passwordSalt, UserType.ATHLETE);
     }
 
-    public Athlete(String name, String email, String passwordHash, String passwordSalt, String weightClass, float weight, LocalDate dob, float squatMax, float benchMax, float deadliftMax, float height) {
+    public Athlete(String name, String email, String passwordHash, String passwordSalt, String weightClass, float weight, Date dob, float squatMax, float benchMax, float deadliftMax, float height) {
         super(name, email, passwordHash, passwordSalt, UserType.ATHLETE);
         this.weightClass = weightClass;
         this.weight = weight;
@@ -48,7 +49,11 @@ public class Athlete extends User {
         this.weight = weight;
     }
 
-    public LocalDate getDob() {
+    public void setDob(Date dob) {
+        this.dob = dob;
+    }
+
+    public Date getDob() {
         return dob;
     }
 
