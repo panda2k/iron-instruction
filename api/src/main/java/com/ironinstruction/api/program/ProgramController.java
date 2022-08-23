@@ -5,7 +5,9 @@ import java.util.NoSuchElementException;
 import com.ironinstruction.api.errors.ResourceNotFound;
 import com.ironinstruction.api.request.AssignProgramRequest;
 import com.ironinstruction.api.request.CreateWithCoachNoteRequest;
+import com.ironinstruction.api.requests.CreateExerciseRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
+import com.ironinstruction.api.requests.CreateSetRequest;
 import com.ironinstruction.api.responses.VideoLinkResponse;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,7 +39,7 @@ public class ProgramController {
 
     @GetMapping("/{programId}") 
     public Program getProgram(@PathVariable String programId) throws ResourceNotFound {
-        return programService.findProgramById(programId);
+        return programService.findById(programId);
     }
 
     @PostMapping("/{programId}/assign")
@@ -48,12 +50,51 @@ public class ProgramController {
         );
     }
 
-    @PostMapping("/{programId}/week")
+    @PostMapping("/{programId}/weeks")
     public Program createWeek(@PathVariable String programId, @RequestBody CreateWithCoachNoteRequest request) throws ResourceNotFound {
         return programService.addWeek(programId, request.getCoachNote());
     }
-/*
-    @GetMapping("/{programId}/set/{setId}/video") 
+    
+    @PostMapping("/{programId}/weeks/{weekId}/days")
+    public Program createDay(@PathVariable String programId, @PathVariable String weekId, @RequestBody CreateWithCoachNoteRequest request) throws ResourceNotFound {
+        return programService.addDay(programId, weekId, request.getCoachNote()) ;
+    }
+
+    @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises")
+    public Program createExercise(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @RequestBody CreateExerciseRequest request) throws ResourceNotFound {
+        return programService.addExercise(programId, weekId, dayId, request.getName(), request.getCoachNotes(), request.getVideoRef());
+    }
+
+    @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/sets")
+    public Program createSet(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @RequestBody CreateSetRequest request) throws ResourceNotFound {
+        // rpe == -1 when set is designed with reps instead of rpe
+        if (request.getRpe() == -1) { 
+            return programService.addSet(
+                programId,
+                weekId,
+                dayId,
+                exerciseId,
+                request.getReps(),
+                request.getPercentage(),
+                request.getPercentageReference(),
+                request.getCoachNotes(),
+                request.getVideoRequested()
+            );
+        } else {
+            return programService.addSet(
+                programId,
+                weekId,
+                dayId,
+                exerciseId,
+                request.getRpe(),
+                request.getWeight(),
+                request.getCoachNotes(),
+                request.getVideoRequested()
+            );
+        }
+    }
+
+    /*@GetMapping("/{programId}/set/{setId}/video") 
     public VideoLinkResponse (@PathVariable String programId, @PathVariable String setId)  {
          
     }

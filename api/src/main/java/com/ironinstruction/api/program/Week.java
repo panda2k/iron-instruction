@@ -1,5 +1,8 @@
 package com.ironinstruction.api.program;
 
+import com.ironinstruction.api.errors.ResourceNotFound;
+
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 
 import java.util.ArrayList;
@@ -12,8 +15,19 @@ public class Week {
     private ArrayList<Day> days;
 
     public Week(String coachNotes) {
+        this.id = new ObjectId().toString();
         this.coachNotes = coachNotes;
         this.days = new ArrayList<Day>();
+    }
+
+    public Day findDayById(String dayId) throws ResourceNotFound {
+        for (Day day : this.days) {
+            if (day.getId().equals(dayId)) {
+                return day;
+            }
+        }
+
+        throw new ResourceNotFound("Day with id '" + dayId + "' not found");
     }
 
     public String getId() {

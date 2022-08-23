@@ -1,5 +1,6 @@
 package com.ironinstruction.api.program;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 
 public class Set {
@@ -17,7 +18,10 @@ public class Set {
     private String videoRef;
     private boolean videoRequested;
 
+    public Set() { }
+
     public Set(int reps, float percentage, PercentageOptions percentageReference, String coachNotes, boolean videoRequested) {
+        this.id = new ObjectId().toString();
         this.reps = reps;
         this.percentage = percentage;
         this.percentageReference = percentageReference;
@@ -25,11 +29,16 @@ public class Set {
         this.videoRequested = videoRequested;
     }
 
-    public Set(int reps, float rpe, String coachNotes, boolean videoRequested) {
-        this.reps = reps;
+    public Set(float rpe, float weight, String coachNotes, boolean videoRequested) {
+        this.id = new ObjectId().toString();
         this.rpe = rpe;
+        this.weight = weight;
         this.coachNotes = coachNotes;
         this.videoRequested = videoRequested;
+    }
+
+    public String getId() {
+        return this.id;
     }
 
     public int getReps() {

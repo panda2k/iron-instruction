@@ -251,10 +251,10 @@ public class AuthenticationTests {
             .andReturn()
             .getResponse().getContentAsString(), Program.class);
 
-        assertDoesNotThrow(() -> programService.findById(createdProgram.getId()));
         this.createdPrograms.add(createdProgram.getId());
 
         String programUrlPath = "/api/v1/programs/" + createdProgram.getId();
+
         // assign program
         mockMvc.perform(post(programUrlPath + "/assign")
             .header("Authorization", "Bearer " + validCoachTokens.getAccessToken())
@@ -307,14 +307,14 @@ public class AuthenticationTests {
             .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
        
         // add to program as coach
-        mockMvc.perform(post(programUrlPath + "/week")
+        mockMvc.perform(post(programUrlPath + "/weeks")
             .header("Authorization", "Bearer" + validCoachTokens.getAccessToken())
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("hi"))))
             .andExpect(status().isOk());
 
         // add to program as athlete
-        mockMvc.perform(post(programUrlPath + "/week")
+        mockMvc.perform(post(programUrlPath + "/weeks")
             .header("Authorization", "Bearer" + validAthleteTokens.getAccessToken())
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("hi"))))
@@ -322,7 +322,7 @@ public class AuthenticationTests {
             .andExpect(jsonPath("$.message", containsString("Only coach")));
 
         // add to program as bad coach 
-        mockMvc.perform(post(programUrlPath + "/week")
+        mockMvc.perform(post(programUrlPath + "/weeks")
             .header("Authorization", "Bearer" + badCoachTokens.getAccessToken())
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("hi"))))

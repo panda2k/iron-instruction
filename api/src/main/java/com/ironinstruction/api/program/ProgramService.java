@@ -20,7 +20,7 @@ public class ProgramService {
         return programRepository.insert(program);
     }
 
-    public Program findProgramById(String id) throws ResourceNotFound {
+    public Program findById(String id) throws ResourceNotFound {
         try {
             return programRepository.findById(id).get();
         } catch (NoSuchElementException e) {
@@ -29,21 +29,53 @@ public class ProgramService {
     }
 
     public Program assignProgram(String programId, String athleteEmail) throws ResourceNotFound {
-        Program program = this.findProgramById(programId);
+        Program program = this.findById(programId);
         program.setAthleteEmail(athleteEmail);
 
         return programRepository.save(program);
     }
 
     public Program addWeek(String programId, String coachNotes) throws ResourceNotFound {
-        Program program = this.findProgramById(programId);
+        Program program = this.findById(programId);
         program.addWeek(new Week(coachNotes));
 
         return programRepository.save(program);
     }
 
-    /*public Program addDay(String programId, String dayId, String coachNotes) throws ResourceNotFound {
-        Program program = this.findProgramById(programId); 
-    }*/
+    public Program addDay(String programId, String weekId, String coachNotes) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        program.findWeekById(weekId).addDay(new Day(coachNotes)); 
+
+        return programRepository.save(program);
+    }
+
+    public Program addExercise(String programId, String weekId, String dayId, String name, String coachNotes, String videoRef) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        Exercise exercise = new Exercise(name, coachNotes, videoRef);
+        program.findWeekById(weekId).findDayById(dayId).addExercise(exercise);
+
+        return programRepository.save(program);
+    }
+
+    public Program addSet(String programId, String weekId, String dayId, String exerciseId, int reps, float percentage, PercentageOptions percentageReference, String coachNotes, boolean videoRequested) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        Set set = new  Set(reps, percentage, percentageReference, coachNotes, videoRequested);
+        program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).addSet(set);
+        
+        return programRepository.save(program);
+    }
+
+    public Program addSet(String programId, String weekId, String dayId, String exerciseId, float rpe, float weight, String coachNotes, boolean videoRequested) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        Set set = new  Set(rpe, weight, coachNotes, videoRequested);
+        program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).addSet(set);
+        
+        return programRepository.save(program);
+    }
+
+    public void deleteById(String programId) {
+        programRepository.deleteById(programId);
+        return;
+    }
 }
 

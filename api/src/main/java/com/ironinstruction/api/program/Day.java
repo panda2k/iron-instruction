@@ -1,8 +1,11 @@
 package com.ironinstruction.api.program;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 
 import java.util.ArrayList;
+
+import com.ironinstruction.api.errors.ResourceNotFound;
 
 public class Day {
     @Id
@@ -12,8 +15,19 @@ public class Day {
     private ArrayList<Exercise> exercises;
 
     public Day(String coachNotes) {
+        this.id = new ObjectId().toString();
         this.coachNotes = coachNotes;
         this.exercises = new ArrayList<Exercise>();
+    }
+
+    public Exercise findExerciseById(String exerciseId) throws ResourceNotFound {
+        for (Exercise exercise : this.exercises) {
+            if (exercise.getId().equals(exerciseId)) {
+                return exercise;
+            }
+        }
+
+        throw new ResourceNotFound("Exercise with id '" + exerciseId + "' not found");
     }
 
     public String getId() {

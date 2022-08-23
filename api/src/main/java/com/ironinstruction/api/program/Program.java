@@ -1,5 +1,7 @@
 package com.ironinstruction.api.program;
 
+import com.ironinstruction.api.errors.ResourceNotFound;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -22,6 +24,16 @@ public class Program {
         this.description = description;
         this.template = template;
         this.weeks = new ArrayList<Week>();
+    }
+
+    public Week findWeekById(String weekId) throws ResourceNotFound {
+        for (Week week : this.weeks) {
+            if (week.getId().equals(weekId)) {
+                return week;
+            }
+        }
+
+        throw new ResourceNotFound("Can't find week with id '" + weekId + "'");
     }
 
     public String getCoachEmail() {
