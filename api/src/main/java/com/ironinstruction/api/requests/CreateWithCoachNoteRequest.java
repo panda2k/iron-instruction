@@ -1,4 +1,4 @@
-package com.ironinstruction.api.request;
+package com.ironinstruction.api.requests;
 
 public class CreateWithCoachNoteRequest {
     private String coachNote; 

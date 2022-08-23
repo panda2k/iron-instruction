@@ -8,8 +8,8 @@ import com.ironinstruction.api.program.Program;
 import com.ironinstruction.api.program.ProgramService;
 import com.ironinstruction.api.program.Set;
 import com.ironinstruction.api.program.Week;
-import com.ironinstruction.api.request.AssignProgramRequest;
-import com.ironinstruction.api.request.CreateWithCoachNoteRequest;
+import com.ironinstruction.api.requests.AssignProgramRequest;
+import com.ironinstruction.api.requests.CreateWithCoachNoteRequest;
 import com.ironinstruction.api.requests.CreateExerciseRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateSetRequest;
@@ -222,7 +222,7 @@ public class UserDataTests {
     @AfterAll
     public void deleteAccounts() {
         this.createdAccounts.forEach((email) -> userService.deleteByEmail(email));
-        //this.createdPrograms.forEach((id) -> programService.deleteById(id));
+        this.createdPrograms.forEach((id) -> programService.deleteById(id));
     }
 }
 

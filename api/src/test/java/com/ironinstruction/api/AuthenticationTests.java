@@ -1,6 +1,8 @@
 package com.ironinstruction.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ironinstruction.api.requests.AssignProgramRequest;
+import com.ironinstruction.api.requests.CreateWithCoachNoteRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateUserRequest;
 import com.ironinstruction.api.requests.LoginRequest;
@@ -10,8 +12,6 @@ import com.ironinstruction.api.user.UserService;
 import com.ironinstruction.api.user.UserType;
 import com.ironinstruction.api.program.Program;
 import com.ironinstruction.api.program.ProgramService;
-import com.ironinstruction.api.request.AssignProgramRequest;
-import com.ironinstruction.api.request.CreateWithCoachNoteRequest;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;

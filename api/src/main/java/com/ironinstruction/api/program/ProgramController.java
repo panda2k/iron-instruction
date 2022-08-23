@@ -3,8 +3,8 @@ package com.ironinstruction.api.program;
 import java.util.NoSuchElementException;
 
 import com.ironinstruction.api.errors.ResourceNotFound;
-import com.ironinstruction.api.request.AssignProgramRequest;
-import com.ironinstruction.api.request.CreateWithCoachNoteRequest;
+import com.ironinstruction.api.requests.AssignProgramRequest;
+import com.ironinstruction.api.requests.CreateWithCoachNoteRequest;
 import com.ironinstruction.api.requests.CreateExerciseRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateSetRequest;
@@ -12,6 +12,7 @@ import com.ironinstruction.api.responses.VideoLinkResponse;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -92,6 +93,11 @@ public class ProgramController {
                 request.getVideoRequested()
             );
         }
+    }
+
+    @PatchMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/sets/{setId}")
+    public Program updateSet(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @PathVariable String setId) throws ResourceNotFound {
+         
     }
 
     /*@GetMapping("/{programId}/set/{setId}/video") 
