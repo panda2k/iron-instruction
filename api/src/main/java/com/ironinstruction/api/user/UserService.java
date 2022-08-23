@@ -18,7 +18,7 @@ public class UserService {
         this.passwordManager = new PasswordManager();
     }
 
-    public User findUserByEmail(String email) throws NoSuchElementException {
+    public User findByEmail(String email) throws NoSuchElementException {
         return userRepository.findByEmail(email).get();
     }
 
@@ -33,13 +33,13 @@ public class UserService {
         }
     }
 
-    public void deleteUserByEmail(String email) {
+    public void deleteByEmail(String email) {
         userRepository.deleteByEmail(email);
         return;
     }
 
     public Athlete updateAthleteInfoByEmail(String email, String weightClass, float weight, Date dob, float squatMax, float benchMax, float deadliftMax, float height) throws NoSuchElementException {
-        Athlete user = (Athlete) findUserByEmail(email); 
+        Athlete user = (Athlete) findByEmail(email); 
          
         user.setWeightClass(weightClass);
         user.setWeight(weight);

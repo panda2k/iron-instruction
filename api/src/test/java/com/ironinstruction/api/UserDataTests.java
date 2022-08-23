@@ -63,7 +63,11 @@ public class UserDataTests {
         
         this.tokens = objectMapper.readValue(validResult.getResponse().getContentAsString(), JWTResponse.class);
     }
-   
+
+    @Test void testProgramAddition() throws Exception {
+        
+    }
+
     @Test
     public void testAthleteUpdate() throws Exception {
         // test valid body
@@ -83,7 +87,7 @@ public class UserDataTests {
             .header("Authorization", "Bearer " + tokens.getAccessToken()))
             .andExpect(status().isOk());
 
-        Athlete ath = (Athlete) userService.findUserByEmail("data@gmail.com");
+        Athlete ath = (Athlete) userService.findByEmail("data@gmail.com");
         assertTrue(ath.getWeightClass().equals(validRequest.getWeightClass()));
         assertTrue(ath.getWeight() == validRequest.getWeight());
         assertTrue(ath.getDob().equals(validRequest.getDob()));
@@ -109,7 +113,7 @@ public class UserDataTests {
 
     @AfterAll
     public void deleteAccounts() {
-        this.createdAccounts.forEach((email) -> userService.deleteUserByEmail(email));
+        this.createdAccounts.forEach((email) -> userService.deleteByEmail(email));
     }
 }
 

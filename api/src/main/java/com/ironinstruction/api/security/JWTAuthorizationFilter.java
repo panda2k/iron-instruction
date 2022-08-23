@@ -93,7 +93,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
                         String programId = matchProgramId.group();
                         Program program;
                         try {
-                            program = programService.findProgramById(programId);
+                            program = programService.findById(programId);
                         } catch (ResourceNotFound e) { // kind of a hacky solution
                             throw new AccessDenied("Invalid resource requested");
                         }

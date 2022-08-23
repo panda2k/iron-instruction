@@ -25,7 +25,7 @@ public class CustomAuthenticationManager implements AuthenticationManager {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         try {
-            User user = userService.findUserByEmail((String) authentication.getPrincipal());
+            User user = userService.findByEmail((String) authentication.getPrincipal());
             try {
                 if (user.getPasswordHash().equals(passwordManager.hash((String) authentication.getCredentials(), user.getPasswordSalt()))) {
                     return new UsernamePasswordAuthenticationToken(authentication.getPrincipal() + ";" + user.getUserType(), authentication.getCredentials());

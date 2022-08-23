@@ -50,8 +50,10 @@ public class AuthenticationTests {
     private ObjectMapper objectMapper;
 
     private ArrayList<String> createdAccounts;
+    private ArrayList<String> createdPrograms;
 
     public AuthenticationTests() {
+        this.createdPrograms = new ArrayList<String>();
         this.createdAccounts = new ArrayList<String>();  
     }
 
@@ -78,7 +80,7 @@ public class AuthenticationTests {
             .content(objectMapper.writeValueAsString(duplicateUser)))
             .andExpect(status().isBadRequest());
         
-        assertDoesNotThrow(() -> userService.findUserByEmail(request.getEmail()));
+        assertDoesNotThrow(() -> userService.findByEmail(request.getEmail()));
 
     }
 
@@ -249,8 +251,9 @@ public class AuthenticationTests {
             .andReturn()
             .getResponse().getContentAsString(), Program.class);
 
-        assertDoesNotThrow(() -> programService.findProgramById(createdProgram.getId()));
-       
+        assertDoesNotThrow(() -> programService.findById(createdProgram.getId()));
+        this.createdPrograms.add(createdProgram.getId());
+
         String programUrlPath = "/api/v1/programs/" + createdProgram.getId();
         // assign program
         mockMvc.perform(post(programUrlPath + "/assign")
@@ -329,7 +332,8 @@ public class AuthenticationTests {
 
     @AfterAll
     public void deleteAccounts() {
-        this.createdAccounts.forEach((email) -> userService.deleteUserByEmail(email));
+        this.createdAccounts.forEach((email) -> userService.deleteByEmail(email));
+        this.createdPrograms.forEach((id) -> programService.deleteById(id));
     }
 }
 
