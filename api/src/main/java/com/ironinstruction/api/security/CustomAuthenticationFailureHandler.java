@@ -29,6 +29,7 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
         } else if (exception instanceof BadCredentialsException) {
             response.setStatus(400);
         }
+
         response.getWriter().write(new ObjectMapper().writeValueAsString(new ErrorResponse(exception.getMessage())));
         response.getWriter().flush();
     }

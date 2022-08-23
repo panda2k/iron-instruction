@@ -1,7 +1,6 @@
 package com.ironinstruction.api.user;
 
 import com.ironinstruction.api.errors.DuplicateEmail;
-import com.ironinstruction.api.errors.ResourceNotFound;
 import com.ironinstruction.api.requests.CreateUserRequest;
 import com.ironinstruction.api.requests.UpdateAthleteRequest;
 import com.ironinstruction.api.errors.ErrorResponse;
@@ -30,17 +29,11 @@ public class UserController {
 
     @ResponseBody
     @ResponseStatus(value=HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(ResourceNotFound.class)
-    public ErrorResponse noAccount(ResourceNotFound e) {
-        return new ErrorResponse("No account with email '" + e.getResourceId() + "' found" );
-    }
-
-    @ResponseBody
-    @ResponseStatus(value=HttpStatus.BAD_REQUEST)
     @ExceptionHandler(DuplicateEmail.class)
     public ErrorResponse duplicateEmail(DuplicateEmail e) {
         return new ErrorResponse("Account with email '" + e.getEmail() + "' already exists");
     }
+
     // POST /users
     @PostMapping
     public User createUser(@RequestBody CreateUserRequest createUserRequest) throws NoSuchAlgorithmException, InvalidKeySpecException, DuplicateEmail {

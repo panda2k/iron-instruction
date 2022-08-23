@@ -49,7 +49,6 @@ public class UserService {
         user.setDeadliftMax(deadliftMax);
         user.setHeight(height);
 
-        userRepository.save(user);
-        return user;
+        return userRepository.save(user);
     }
 }

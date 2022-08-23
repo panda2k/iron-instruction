@@ -1,5 +1,6 @@
 package com.ironinstruction.api.security;
 
+import com.ironinstruction.api.program.ProgramService;
 import com.ironinstruction.api.refreshtoken.RefreshTokenService;
 import com.ironinstruction.api.user.UserService;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -26,10 +27,10 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public FilterRegistrationBean<JWTAuthorizationFilter> authorizationFilter (UserService userService) {
+    public FilterRegistrationBean<JWTAuthorizationFilter> authorizationFilter (UserService userService, ProgramService programService) {
         CustomAuthenticationManager authenticationManager = new CustomAuthenticationManager(userService);
         FilterRegistrationBean<JWTAuthorizationFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(new JWTAuthorizationFilter(authenticationManager, failureHandler));
+        registrationBean.setFilter(new JWTAuthorizationFilter(programService, authenticationManager, failureHandler));
         registrationBean.addUrlPatterns("/api/*");
         registrationBean.setOrder(2);
         return registrationBean;

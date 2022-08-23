@@ -11,9 +11,8 @@ public class Day {
     private String athleteNotes;
     private ArrayList<Exercise> exercises;
 
-    public Day(String coachNotes, String athleteNotes) {
+    public Day(String coachNotes) {
         this.coachNotes = coachNotes;
-        this.athleteNotes = athleteNotes;
         this.exercises = new ArrayList<Exercise>();
     }
 

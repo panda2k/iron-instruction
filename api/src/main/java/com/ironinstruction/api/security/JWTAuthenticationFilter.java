@@ -50,7 +50,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         // create JWT access token 
         String accessToken = TokenManager.generateJWT((String) authResult.getPrincipal(), TokenType.ACCESS);
-
+        
         // create JWT refresh token 
         RefreshToken refreshToken = new RefreshToken(TokenManager.generateJWT((String) authResult.getPrincipal(), TokenType.REFRESH));
         refreshTokenService.saveRefreshToken(refreshToken);

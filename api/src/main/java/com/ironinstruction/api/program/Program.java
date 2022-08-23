@@ -1,9 +1,11 @@
 package com.ironinstruction.api.program;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 
+@Document(collection = "programs")
 public class Program {
     @Id
     private String id;
@@ -12,20 +14,22 @@ public class Program {
     private ArrayList<Week> weeks;
     private boolean template; // if template program, can't be directly assigned to athlete
     private String athleteEmail; // who the program is assigned to
+    private final String coachEmail;
 
-    public Program(String name, String description, boolean template) {
+    public Program(String coachEmail, String name, String description, boolean template) {
+        this.coachEmail = coachEmail;
         this.name = name;
         this.description = description;
         this.template = template;
         this.weeks = new ArrayList<Week>();
     }
 
-    public String getId() {
-        return id;
+    public String getCoachEmail() {
+        return this.coachEmail;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public String getId() {
+        return id;
     }
 
     public String getName() {

@@ -11,9 +11,8 @@ public class Week {
     private String athleteNotes;
     private ArrayList<Day> days;
 
-    public Week(String coachNotes, String athleteNotes) {
+    public Week(String coachNotes) {
         this.coachNotes = coachNotes;
-        this.athleteNotes = athleteNotes;
         this.days = new ArrayList<Day>();
     }
 

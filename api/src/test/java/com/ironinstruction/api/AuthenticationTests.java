@@ -1,12 +1,17 @@
 package com.ironinstruction.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateUserRequest;
 import com.ironinstruction.api.requests.LoginRequest;
 import com.ironinstruction.api.requests.RefreshTokenRequest;
 import com.ironinstruction.api.responses.JWTResponse;
 import com.ironinstruction.api.user.UserService;
 import com.ironinstruction.api.user.UserType;
+import com.ironinstruction.api.program.Program;
+import com.ironinstruction.api.program.ProgramService;
+import com.ironinstruction.api.request.AssignProgramRequest;
+import com.ironinstruction.api.request.CreateWithCoachNoteRequest;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -37,6 +42,9 @@ public class AuthenticationTests {
 
     @Autowired
     private UserService userService; 
+
+    @Autowired 
+    private ProgramService programService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -184,6 +192,139 @@ public class AuthenticationTests {
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(refreshRequestTwo)))
             .andExpect(status().isOk());
+    }
+
+    @Test 
+    public void testProgramPermissions() throws Exception {
+        userService.createUser("athlete", "ath@gmail.com", "test", UserType.ATHLETE);
+        userService.createUser("athlete", "badath@gmail.com", "test", UserType.ATHLETE);
+        userService.createUser("coach", "badcoach@gmail.com", "test", UserType.COACH);
+        this.createdAccounts.add("ath@gmail.com");
+        this.createdAccounts.add("badath@gmail.com");
+        this.createdAccounts.add("badcoach@gmail.com");
+        
+        LoginRequest validCoach = new LoginRequest("hello@gmail.com", "test");
+        JWTResponse validCoachTokens = objectMapper.readValue(mockMvc.perform(post("/api/v1/login")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(validCoach)))
+            .andReturn()
+            .getResponse().getContentAsString(), JWTResponse.class);
+
+        LoginRequest validAthlete = new LoginRequest("ath@gmail.com", "test");
+        JWTResponse validAthleteTokens = objectMapper.readValue(mockMvc.perform(post("/api/v1/login")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(validAthlete)))
+            .andReturn()
+            .getResponse().getContentAsString(), JWTResponse.class);
+
+        LoginRequest badAthlete = new LoginRequest("badath@gmail.com", "test");
+        JWTResponse badAthleteTokens = objectMapper.readValue(mockMvc.perform(post("/api/v1/login")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(badAthlete)))
+            .andReturn()
+            .getResponse().getContentAsString(), JWTResponse.class);
+
+        LoginRequest badCoach = new LoginRequest("badcoach@gmail.com", "test");
+        JWTResponse badCoachTokens = objectMapper.readValue(mockMvc.perform(post("/api/v1/login")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(badCoach)))
+            .andReturn()
+            .getResponse().getContentAsString(), JWTResponse.class);
+
+        // create program as athlete 
+        CreateProgramRequest createProgramRequest = new CreateProgramRequest("strong", "get strong", false);
+        mockMvc.perform(post("/api/v1/programs")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(createProgramRequest))
+            .header("Authorization", "Bearer " + validAthleteTokens.getAccessToken()))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("Only coach")));
+        
+        // create valid program
+        Program createdProgram = objectMapper.readValue(mockMvc.perform(post("/api/v1/programs")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(createProgramRequest))
+            .header("Authorization", "Bearer " + validCoachTokens.getAccessToken()))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse().getContentAsString(), Program.class);
+
+        assertDoesNotThrow(() -> programService.findProgramById(createdProgram.getId()));
+       
+        String programUrlPath = "/api/v1/programs/" + createdProgram.getId();
+        // assign program
+        mockMvc.perform(post(programUrlPath + "/assign")
+            .header("Authorization", "Bearer " + validCoachTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new AssignProgramRequest("ath@gmail.com"))))
+            .andExpect(status().isOk());
+        
+        // assign program as invalid coach
+        mockMvc.perform(post(programUrlPath + "/assign")
+            .header("Authorization", "Bearer " + badCoachTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new AssignProgramRequest("ath@gmail.com"))))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
+
+        // assign program as athlete 
+        mockMvc.perform(post(programUrlPath + "/assign")
+            .header("Authorization", "Bearer " + validAthleteTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new AssignProgramRequest("ath@gmail.com"))))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("Only coaches")));
+
+        // get program as coach
+        assertDoesNotThrow(() -> objectMapper.readValue(mockMvc.perform(get(programUrlPath)
+            .header("Authorization", "Bearer " + validCoachTokens.getAccessToken()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value(createdProgram.getName()))
+            .andReturn()
+            .getResponse().getContentAsString(), Program.class));
+
+        // get program as athlete
+        assertDoesNotThrow(() -> objectMapper.readValue(mockMvc.perform(get(programUrlPath)
+            .header("Authorization", "Bearer " + validAthleteTokens.getAccessToken()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value(createdProgram.getName()))
+            .andReturn()
+            .getResponse().getContentAsString(), Program.class));
+
+        // get program with unauthorized coach 
+        mockMvc.perform(get(programUrlPath)
+            .header("Authorization", "Bearer " + badAthleteTokens.getAccessToken()))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
+
+        // get program with unautorized athlete
+        mockMvc.perform(get(programUrlPath)
+            .header("Authorization", "Bearer " + badCoachTokens.getAccessToken()))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
+       
+        // add to program as coach
+        mockMvc.perform(post(programUrlPath + "/week")
+            .header("Authorization", "Bearer" + validCoachTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("hi"))))
+            .andExpect(status().isOk());
+
+        // add to program as athlete
+        mockMvc.perform(post(programUrlPath + "/week")
+            .header("Authorization", "Bearer" + validAthleteTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("hi"))))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("Only coach")));
+
+        // add to program as bad coach 
+        mockMvc.perform(post(programUrlPath + "/week")
+            .header("Authorization", "Bearer" + badCoachTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("hi"))))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
     }
 
     @AfterAll
