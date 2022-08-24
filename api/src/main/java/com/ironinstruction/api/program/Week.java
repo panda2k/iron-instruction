@@ -14,6 +14,8 @@ public class Week {
     private String athleteNotes;
     private ArrayList<Day> days;
 
+    public Week() { }
+
     public Week(String coachNotes) {
         this.id = new ObjectId().toString();
         this.coachNotes = coachNotes;

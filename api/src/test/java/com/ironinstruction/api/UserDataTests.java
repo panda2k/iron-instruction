@@ -33,7 +33,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -92,7 +91,7 @@ public class UserDataTests {
         this.coachTokens = objectMapper.readValue(validCoachResult.getResponse().getContentAsString(), JWTResponse.class);
     }
 
-    @Test void testProgramAddition() throws Exception {
+    @Test void testProgramData() throws Exception {
         // create valid program
         CreateProgramRequest createProgramRequest = new CreateProgramRequest("strong", "get strong", false);
         Program createdProgram = objectMapper.readValue(mockMvc.perform(post("/api/v1/programs")
@@ -159,7 +158,6 @@ public class UserDataTests {
         assertTrue(set.getRpe() == 8);
         assertTrue(set.getReps() == 0);
 
-
         // add set to exercise (reps)
         CreateSetRequest createSetRequestReps = new CreateSetRequest(10, -1, 12, 100, PercentageOptions.Bench, "note", true);
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets")
@@ -225,6 +223,44 @@ public class UserDataTests {
             .andExpect(status().isOk()); 
 
         assertTrue(programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0).getAthleteNotes().equals("Good bench"));
+
+        // get invalid program 
+        mockMvc.perform(get("/api/v1/programs/fdsjafjkas")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("Invalid resource")));
+
+        // add invalid week note
+        mockMvc.perform(patch(programUrlPath + "/weeks/fjdkskfsd/notes")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("bad"))))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message", containsString("not found")));
+
+        // add invalid day note
+        mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/fjdsjkfksd/notes")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("bad"))))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message", containsString("not found")));
+        
+        // add invalid exercise note 
+        mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/fdsjkfkjdskj/notes")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("bad"))))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message", containsString("not found")));
+
+        // update invalid set
+        mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets/fdsjkkjlfsdjkls")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(finishSetRequest))
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message", containsString("not found")));
     }
 
     @Test

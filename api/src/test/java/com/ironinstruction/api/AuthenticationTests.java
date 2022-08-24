@@ -307,15 +307,16 @@ public class AuthenticationTests {
             .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
        
         // add to program as coach
-        mockMvc.perform(post(programUrlPath + "/weeks")
-            .header("Authorization", "Bearer" + validCoachTokens.getAccessToken())
+        Program updatedProgram = objectMapper.readValue(mockMvc.perform(post(programUrlPath + "/weeks")
+            .header("Authorization", "Bearer " + validCoachTokens.getAccessToken())
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString(), Program.class);
 
         // add to program as athlete
         mockMvc.perform(post(programUrlPath + "/weeks")
-            .header("Authorization", "Bearer" + validAthleteTokens.getAccessToken())
+            .header("Authorization", "Bearer " + validAthleteTokens.getAccessToken())
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isForbidden())
@@ -323,11 +324,26 @@ public class AuthenticationTests {
 
         // add to program as bad coach 
         mockMvc.perform(post(programUrlPath + "/weeks")
-            .header("Authorization", "Bearer" + badCoachTokens.getAccessToken())
+            .header("Authorization", "Bearer " + badCoachTokens.getAccessToken())
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
+
+        // add to athlete notes as coach
+        mockMvc.perform(patch(programUrlPath + "/weeks/" + updatedProgram.getWeeks().get(0).getId() + "/notes")
+            .header("Authorization", "Bearer " + validCoachTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("Coaches can't use")));
+
+        // add to athlete note as athlete
+        mockMvc.perform(patch(programUrlPath + "/weeks/" + updatedProgram.getWeeks().get(0).getId() + "/notes")
+            .header("Authorization", "Bearer " + validAthleteTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
+            .andExpect(status().isOk());
     }
 
     @AfterAll
