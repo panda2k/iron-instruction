@@ -24,14 +24,14 @@ public class Exercise {
         this.sets = new ArrayList<Set>();
     }
 
-    public Set getSetById(String setId) throws ResourceNotFound {
+    public Set findSetById(String setId) throws ResourceNotFound {
         for (Set set : this.sets) {
             if (set.getId().equals(setId)) {
                 return set;
             }
         }
 
-         throw new ResourceNotFound("Set with id '" + setId + "' not found");
+         throw new ResourceNotFound(setId);
     }
 
     public String getId() {

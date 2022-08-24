@@ -27,7 +27,7 @@ public class Week {
             }
         }
 
-        throw new ResourceNotFound("Day with id '" + dayId + "' not found");
+        throw new ResourceNotFound(dayId);
     }
 
     public String getId() {

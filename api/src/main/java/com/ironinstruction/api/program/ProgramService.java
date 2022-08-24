@@ -1,5 +1,6 @@
 package com.ironinstruction.api.program;
 
+import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
 import com.ironinstruction.api.errors.ResourceNotFound;
@@ -70,6 +71,49 @@ public class ProgramService {
         Set set = new  Set(rpe, weight, coachNotes, videoRequested);
         program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).addSet(set);
         
+        return programRepository.save(program);
+    }
+
+    public Program updateSet(String programId, String weekId, String dayId, String exerciseId, String setId, int completedReps, String athleteNotes) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        Set set = program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).findSetById(setId);
+        set.setCompletedReps(completedReps);
+        set.setAthleteNotes(athleteNotes);
+
+        return programRepository.save(program);
+    }
+
+    public Program updateDay(String programId, String weekId, String dayId, Day day) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        ArrayList<Day> days = program.findWeekById(weekId).getDays();
+        for (int i = 0; i < days.size(); i++) {
+            if (days.get(i).getId().equals(dayId)) {
+                days.set(i, day);
+                return programRepository.save(program);
+            }
+        }
+
+        throw new ResourceNotFound(dayId);
+    }
+
+    public Program updateWeekAthleteNote(String programId, String weekId, String athleteNote) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        program.findWeekById(weekId).setAthleteNotes(athleteNote);
+
+        return programRepository.save(program);
+    }
+
+    public Program updateDayAthleteNote(String programId, String weekId, String dayId, String athleteNote) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        program.findWeekById(weekId).findDayById(dayId).setAthleteNotes(athleteNote);
+
+        return programRepository.save(program);
+    }
+
+    public Program updateExerciseAthleteNote(String programId, String weekId, String dayId, String exerciseId, String athleteNote) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).setAthleteNotes(athleteNote);
+
         return programRepository.save(program);
     }
 

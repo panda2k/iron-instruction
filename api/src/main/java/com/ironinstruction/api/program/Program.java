@@ -33,7 +33,7 @@ public class Program {
             }
         }
 
-        throw new ResourceNotFound("Can't find week with id '" + weekId + "'");
+        throw new ResourceNotFound(weekId);
     }
 
     public String getCoachEmail() {

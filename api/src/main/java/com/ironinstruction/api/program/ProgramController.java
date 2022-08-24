@@ -1,10 +1,9 @@
 package com.ironinstruction.api.program;
 
-import java.util.NoSuchElementException;
-
 import com.ironinstruction.api.errors.ResourceNotFound;
 import com.ironinstruction.api.requests.AssignProgramRequest;
-import com.ironinstruction.api.requests.CreateWithCoachNoteRequest;
+import com.ironinstruction.api.requests.NoteRequest;
+import com.ironinstruction.api.requests.FinishSetRequest;
 import com.ironinstruction.api.requests.CreateExerciseRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateSetRequest;
@@ -52,18 +51,38 @@ public class ProgramController {
     }
 
     @PostMapping("/{programId}/weeks")
-    public Program createWeek(@PathVariable String programId, @RequestBody CreateWithCoachNoteRequest request) throws ResourceNotFound {
-        return programService.addWeek(programId, request.getCoachNote());
+    public Program createWeek(@PathVariable String programId, @RequestBody NoteRequest request) throws ResourceNotFound {
+        return programService.addWeek(programId, request.getNote());
     }
-    
+   
+    @PatchMapping("/{programId}/weeks/{weekId}/notes")
+    public Program updateWeekAthleteNote(@PathVariable String programId, @PathVariable String weekId, @RequestBody NoteRequest request) throws ResourceNotFound {
+        return programService.updateWeekAthleteNote(programId, weekId, request.getNote());
+    }
+
     @PostMapping("/{programId}/weeks/{weekId}/days")
-    public Program createDay(@PathVariable String programId, @PathVariable String weekId, @RequestBody CreateWithCoachNoteRequest request) throws ResourceNotFound {
-        return programService.addDay(programId, weekId, request.getCoachNote()) ;
+    public Program createDay(@PathVariable String programId, @PathVariable String weekId, @RequestBody NoteRequest request) throws ResourceNotFound {
+        return programService.addDay(programId, weekId, request.getNote());
+    }
+
+    @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/update")
+    public Program updateDay(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @RequestBody Day day) throws ResourceNotFound {
+        return programService.updateDay(programId, weekId, dayId, day);    
+    }
+
+    @PatchMapping("/{programId}/weeks/{weekId}/days/{dayId}/notes")
+    public Program updateDayAthleteNote(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @RequestBody NoteRequest request) throws ResourceNotFound {
+        return programService.updateDayAthleteNote(programId, weekId, dayId, request.getNote());
     }
 
     @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises")
     public Program createExercise(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @RequestBody CreateExerciseRequest request) throws ResourceNotFound {
         return programService.addExercise(programId, weekId, dayId, request.getName(), request.getCoachNotes(), request.getVideoRef());
+    }
+
+    @PatchMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/notes")
+    public Program updateExerciseAthleteNote(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @RequestBody NoteRequest request) throws ResourceNotFound {
+        return programService.updateExerciseAthleteNote(programId, weekId, dayId, exerciseId, request.getNote());
     }
 
     @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/sets")
@@ -96,9 +115,10 @@ public class ProgramController {
     }
 
     @PatchMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/sets/{setId}")
-    public Program updateSet(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @PathVariable String setId) throws ResourceNotFound {
-         
+    public Program updateSet(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @PathVariable String setId, @RequestBody FinishSetRequest request) throws ResourceNotFound {
+        return programService.updateSet(programId, weekId, dayId, exerciseId, setId, request.getRepsDone(), request.getAthleteNotes());
     }
+
 
     /*@GetMapping("/{programId}/set/{setId}/video") 
     public VideoLinkResponse (@PathVariable String programId, @PathVariable String setId)  {

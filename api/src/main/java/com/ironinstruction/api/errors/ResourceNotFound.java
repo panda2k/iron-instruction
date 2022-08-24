@@ -1,6 +1,6 @@
 package com.ironinstruction.api.errors;
 
-public class ResourceNotFound extends Exception{
+public class ResourceNotFound extends Exception {
     private final String resourceId;
     public ResourceNotFound(String resourceId) {
         super();

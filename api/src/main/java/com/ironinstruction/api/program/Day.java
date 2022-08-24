@@ -14,6 +14,8 @@ public class Day {
     private String athleteNotes;
     private ArrayList<Exercise> exercises;
 
+    public Day() { }
+
     public Day(String coachNotes) {
         this.id = new ObjectId().toString();
         this.coachNotes = coachNotes;

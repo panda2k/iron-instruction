@@ -9,13 +9,12 @@ import com.ironinstruction.api.program.ProgramService;
 import com.ironinstruction.api.program.Set;
 import com.ironinstruction.api.program.Week;
 import com.ironinstruction.api.requests.AssignProgramRequest;
-import com.ironinstruction.api.requests.CreateWithCoachNoteRequest;
+import com.ironinstruction.api.requests.NoteRequest;
+import com.ironinstruction.api.requests.FinishSetRequest;
 import com.ironinstruction.api.requests.CreateExerciseRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateSetRequest;
-import com.ironinstruction.api.requests.CreateUserRequest;
 import com.ironinstruction.api.requests.LoginRequest;
-import com.ironinstruction.api.requests.RefreshTokenRequest;
 import com.ironinstruction.api.requests.UpdateAthleteRequest;
 import com.ironinstruction.api.responses.JWTResponse;
 import com.ironinstruction.api.user.Athlete;
@@ -122,7 +121,7 @@ public class UserDataTests {
         mockMvc.perform(post(programUrlPath + "/weeks")
             .header("Authorization", "Bearer" + coachTokens.getAccessToken())
             .contentType("application/json")
-            .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("week 1"))))
+            .content(objectMapper.writeValueAsString(new NoteRequest("week 1"))))
             .andExpect(status().isOk());
         Week week = programService.findById(createdProgram.getId()).getWeeks().get(0);
         assertTrue(week.getCoachNotes().equals("week 1"));
@@ -131,7 +130,7 @@ public class UserDataTests {
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days")
             .header("Authorization", "Bearer" + coachTokens.getAccessToken())
             .contentType("application/json")
-            .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("day 1"))))
+            .content(objectMapper.writeValueAsString(new NoteRequest("day 1"))))
             .andExpect(status().isOk());
 
         Day day = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0);
@@ -174,6 +173,58 @@ public class UserDataTests {
         assertTrue(setReps.getRpe() == 0);
         assertTrue(setReps.getReps() == 10);
         assertTrue(setReps.getPercentageReference().equals(PercentageOptions.Bench));
+
+        // complete set 
+        FinishSetRequest finishSetRequest = new FinishSetRequest(8, "was fatigued");
+        mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets/" + setReps.getId())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(finishSetRequest))
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .andExpect(status().isOk());
+        setReps = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0).getSets().get(1);
+        assertTrue(setReps.getCompletedReps() == finishSetRequest.getRepsDone());
+        assertTrue(setReps.getAthleteNotes().equals(finishSetRequest.getAthleteNotes()));
+
+        // update day 
+        day = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0);
+        String dayId = day.getId();
+        day.findExerciseById(exercise.getId()).getSets().remove(0);
+        mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/update")
+            .header("Authorization", "Bearer " + coachTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(day)))
+            .andExpect(status().isOk());
+
+        day = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0);
+        assertTrue(day.getId().equals(dayId));
+        assertTrue(day.findExerciseById(exercise.getId()).getSets().size() == 1);
+
+        // update week note
+        mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/notes")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("Good week"))))
+            .andExpect(status().isOk()); 
+
+        assertTrue(programService.findById(createdProgram.getId()).getWeeks().get(0).getAthleteNotes().equals("Good week"));
+
+        // update day note 
+        mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/notes")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("Good day"))))
+            .andExpect(status().isOk()); 
+
+        assertTrue(programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getAthleteNotes().equals("Good day"));
+
+        // update exercise note
+        mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/notes")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("Good bench"))))
+            .andExpect(status().isOk()); 
+
+        assertTrue(programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0).getAthleteNotes().equals("Good bench"));
     }
 
     @Test

@@ -2,7 +2,7 @@ package com.ironinstruction.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ironinstruction.api.requests.AssignProgramRequest;
-import com.ironinstruction.api.requests.CreateWithCoachNoteRequest;
+import com.ironinstruction.api.requests.NoteRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateUserRequest;
 import com.ironinstruction.api.requests.LoginRequest;
@@ -310,14 +310,14 @@ public class AuthenticationTests {
         mockMvc.perform(post(programUrlPath + "/weeks")
             .header("Authorization", "Bearer" + validCoachTokens.getAccessToken())
             .contentType("application/json")
-            .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("hi"))))
+            .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isOk());
 
         // add to program as athlete
         mockMvc.perform(post(programUrlPath + "/weeks")
             .header("Authorization", "Bearer" + validAthleteTokens.getAccessToken())
             .contentType("application/json")
-            .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("hi"))))
+            .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Only coach")));
 
@@ -325,7 +325,7 @@ public class AuthenticationTests {
         mockMvc.perform(post(programUrlPath + "/weeks")
             .header("Authorization", "Bearer" + badCoachTokens.getAccessToken())
             .contentType("application/json")
-            .content(objectMapper.writeValueAsString(new CreateWithCoachNoteRequest("hi"))))
+            .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
     }

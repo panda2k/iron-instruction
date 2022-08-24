@@ -97,18 +97,20 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
                         } catch (ResourceNotFound e) { // kind of a hacky solution
                             throw new AccessDenied("Invalid resource requested");
                         }
-                        // VALID COACH EMAIL -> GOOD
+                        // VALID COACH EMAIL -> NOT PATCH REQUEST -> GOOD
                         // INVALID COACH EMAIL -> VALID ATHLETE -> NON-POST-METHOD -> GOOD
                         if (!program.getCoachEmail().equals(userEmail)) {
                             // ALL POST REQUESTS ARE DONE BY COACHES
                             // ATHLETES DO PUTS
                             if (program.getAthleteEmail().equals(userEmail)) {
-                                if (request.getMethod() == "POST") {
+                                if (request.getMethod().equals("POST")) {
                                     throw new AccessDenied("Only coaches can create new resources");
                                 }
                             } else {
                                 throw new AccessDenied("Account doesn't have permission to access requested resource");
                             }
+                        } else if (request.getMethod().equals("PATCH")) {
+                            throw new AccessDenied("Coaches can't use patch requests");
                         }
                     }
                 }
