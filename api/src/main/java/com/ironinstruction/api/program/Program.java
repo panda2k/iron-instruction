@@ -14,15 +14,13 @@ public class Program {
     private String name;
     private String description;
     private ArrayList<Week> weeks;
-    private boolean template; // if template program, can't be directly assigned to athlete
     private String athleteEmail; // who the program is assigned to
     private final String coachEmail;
 
-    public Program(String coachEmail, String name, String description, boolean template) {
+    public Program(String coachEmail, String name, String description) {
         this.coachEmail = coachEmail;
         this.name = name;
         this.description = description;
-        this.template = template;
         this.weeks = new ArrayList<Week>();
     }
 
@@ -66,14 +64,6 @@ public class Program {
 
     public void addWeek(Week week) {
         this.weeks.add(week);
-    }
-
-    public boolean isTemplate() {
-        return template;
-    }
-
-    public void setTemplate(boolean template) {
-        this.template = template;
     }
 
     public String getAthleteEmail() {

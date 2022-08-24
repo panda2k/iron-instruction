@@ -25,4 +25,7 @@ public class SecurityConstants {
     public static final String LOGIN_URL = "/api/v1/login";
     public static final String REFRESH_URL = "/api/v1/refreshtoken";
     public static final int REFRESH_EXPIRATION_TIME_MINUTES = 60 * 24 * 30; // 30 days
+    public static final int URL_EXPIRATION_TIME_MINUTES = 10;
+    public static final String S3_BUCKET_NAME = "iron-instruction";
+    public static final long S3_MAX_FILE_SIZE = 100000000;
 }

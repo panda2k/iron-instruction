@@ -8,6 +8,8 @@ import com.ironinstruction.api.requests.CreateExerciseRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateSetRequest;
 import com.ironinstruction.api.responses.VideoLinkResponse;
+import com.ironinstruction.api.security.SecurityConstants;
+import com.ironinstruction.api.utils.AwsS3Manager;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/programs")
 public class ProgramController {
+    private final AwsS3Manager s3Manager;
     private final ProgramService programService;
 
     public ProgramController(ProgramService programService) {
+        this.s3Manager = new AwsS3Manager(SecurityConstants.S3_BUCKET_NAME);
         this.programService = programService; 
     }
 
@@ -32,8 +36,7 @@ public class ProgramController {
         return programService.createProgram(
             (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), // JWT token's associated email
             request.getName(),
-            request.getDescription(),
-            request.getTemplate()
+            request.getDescription()
         );
     }
 
@@ -80,6 +83,28 @@ public class ProgramController {
         return programService.addExercise(programId, weekId, dayId, request.getName(), request.getCoachNotes(), request.getVideoRef());
     }
 
+    @GetMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/video") 
+    public VideoLinkResponse getExerciseVideoLink(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId) throws ResourceNotFound { 
+        String key = programService.findById(programId).findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).getVideoRef();
+        if (key == null || key.length() == 0) {
+            throw new ResourceNotFound(exerciseId);
+        }
+        return new VideoLinkResponse(this.s3Manager.newPresignedGetUrl(key));
+    }
+    
+    // make it post so only coach can access
+    @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/video/upload") 
+    public VideoLinkResponse createExerciseVideoLink(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId) throws ResourceNotFound { 
+        String existingKey = programService.findById(programId).findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).getVideoRef();
+        if (existingKey != null && existingKey.length() != 0) {
+            this.s3Manager.deleteObject(existingKey);
+        }
+        String key = exerciseId+ ".mp4"; 
+        String videoLink = this.s3Manager.newPresignedPutUrl(key);
+        programService.assignExerciseVideoUrl(programId, weekId, dayId, exerciseId, key);
+        return new VideoLinkResponse(videoLink);
+    }
+
     @PatchMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/notes")
     public Program updateExerciseAthleteNote(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @RequestBody NoteRequest request) throws ResourceNotFound {
         return programService.updateExerciseAthleteNote(programId, weekId, dayId, exerciseId, request.getNote());
@@ -119,15 +144,25 @@ public class ProgramController {
         return programService.updateSet(programId, weekId, dayId, exerciseId, setId, request.getRepsDone(), request.getAthleteNotes());
     }
 
-
-    /*@GetMapping("/{programId}/set/{setId}/video") 
-    public VideoLinkResponse (@PathVariable String programId, @PathVariable String setId)  {
-         
+    @GetMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/sets/{setId}/video") 
+    public VideoLinkResponse getSetVideoLink(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @PathVariable String setId) throws ResourceNotFound { 
+        String key = programService.findById(programId).findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).findSetById(setId).getVideoRef();
+        if (key == null || key.length() == 0) {
+            throw new ResourceNotFound(setId);
+        }
+        return new VideoLinkResponse(this.s3Manager.newPresignedGetUrl(key));
     }
 
-    @GetMapping("/{programId}/set/{setId}/video/upload")
-    public VideoLinkResponse getNewVideoLink(@PathVariable String programId, @PathVariable String setId) {
-        
-    }*/
+    @GetMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/sets/{setId}/video/upload") 
+    public VideoLinkResponse createSetVideoLink(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @PathVariable String setId) throws ResourceNotFound { 
+        String existingKey = programService.findById(programId).findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).findSetById(setId).getVideoRef();
+        if (existingKey != null && existingKey.length() != 0) {
+            this.s3Manager.deleteObject(existingKey);
+        }
+        String key = setId + ".mp4"; 
+        String url = this.s3Manager.newPresignedPutUrl(key);
+        programService.assignSetVideoUrl(programId, weekId, dayId, exerciseId, setId, key);
+        return new VideoLinkResponse(url);
+    }
 }
 

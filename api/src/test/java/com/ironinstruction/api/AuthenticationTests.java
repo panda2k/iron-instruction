@@ -234,7 +234,8 @@ public class AuthenticationTests {
             .getResponse().getContentAsString(), JWTResponse.class);
 
         // create program as athlete 
-        CreateProgramRequest createProgramRequest = new CreateProgramRequest("strong", "get strong", false);
+        CreateProgramRequest createProgramRequest = new CreateProgramRequest("strong", "get strong");
+
         mockMvc.perform(post("/api/v1/programs")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(createProgramRequest))

@@ -15,8 +15,8 @@ public class ProgramService {
         this.programRepository = programRepository;
     }
 
-    public Program createProgram(String coachEmail, String name, String description, boolean template) {
-        Program program = new Program(coachEmail, name, description, template);
+    public Program createProgram(String coachEmail, String name, String description) {
+        Program program = new Program(coachEmail, name, description);
 
         return programRepository.insert(program);
     }
@@ -113,6 +113,20 @@ public class ProgramService {
     public Program updateExerciseAthleteNote(String programId, String weekId, String dayId, String exerciseId, String athleteNote) throws ResourceNotFound {
         Program program = this.findById(programId);
         program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).setAthleteNotes(athleteNote);
+
+        return programRepository.save(program);
+    }
+
+    public Program assignSetVideoUrl(String programId, String weekId, String dayId, String exerciseId, String setId, String link) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).findSetById(setId).setVideoRef(link);
+
+        return programRepository.save(program);
+    }
+
+    public Program assignExerciseVideoUrl(String programId, String weekId, String dayId, String exerciseId, String url) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).setVideoRef(url);
 
         return programRepository.save(program);
     }

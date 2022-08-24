@@ -17,6 +17,7 @@ import com.ironinstruction.api.requests.CreateSetRequest;
 import com.ironinstruction.api.requests.LoginRequest;
 import com.ironinstruction.api.requests.UpdateAthleteRequest;
 import com.ironinstruction.api.responses.JWTResponse;
+import com.ironinstruction.api.responses.VideoLinkResponse;
 import com.ironinstruction.api.user.Athlete;
 import com.ironinstruction.api.user.UserService;
 import com.ironinstruction.api.user.UserType;
@@ -93,7 +94,7 @@ public class UserDataTests {
 
     @Test void testProgramData() throws Exception {
         // create valid program
-        CreateProgramRequest createProgramRequest = new CreateProgramRequest("strong", "get strong", false);
+        CreateProgramRequest createProgramRequest = new CreateProgramRequest("strong", "get strong");
         Program createdProgram = objectMapper.readValue(mockMvc.perform(post("/api/v1/programs")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(createProgramRequest))
@@ -136,7 +137,7 @@ public class UserDataTests {
         assertTrue(day.getCoachNotes().equals("day 1"));
         
         // add exercise to day
-        CreateExerciseRequest createExerciseRequest = new CreateExerciseRequest("Bench", "bench more", "video link");
+        CreateExerciseRequest createExerciseRequest = new CreateExerciseRequest("Bench", "bench more", "");
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises")
             .header("Authorization", "Bearer" + coachTokens.getAccessToken())
             .contentType("application/json")
@@ -182,6 +183,56 @@ public class UserDataTests {
         setReps = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0).getSets().get(1);
         assertTrue(setReps.getCompletedReps() == finishSetRequest.getRepsDone());
         assertTrue(setReps.getAthleteNotes().equals(finishSetRequest.getAthleteNotes()));
+
+        // get non existent download link  
+        mockMvc.perform(get(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets/" + set.getId() + "/video")
+            .header("Authorization", "Bearer " + coachTokens.getAccessToken()))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message", containsString("not found")));
+
+        // get set video upload link
+        VideoLinkResponse setUploadLink = objectMapper.readValue(mockMvc.perform(get(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets/" + set.getId() + "/video/upload")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString(), VideoLinkResponse.class);
+
+        // get set video download link
+        VideoLinkResponse setDownloadLink = objectMapper.readValue(mockMvc.perform(get(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets/" + set.getId() + "/video")
+            .header("Authorization", "Bearer " + coachTokens.getAccessToken()))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString(), VideoLinkResponse.class);
+        
+        System.out.println("Set Links: ");
+        System.out.println(setUploadLink.getUrl());
+        System.out.println(setDownloadLink.getUrl());
+
+        set = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0).getSets().get(0);
+        assertTrue(set.getVideoRef().equals(set.getId() + ".mp4"));
+
+        // get non-existent download link 
+        mockMvc.perform(get(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/video")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message", containsString("not found")));
+
+        // get exercise video upload link
+        VideoLinkResponse exerciseUploadLink = objectMapper.readValue(mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/video/upload")
+            .header("Authorization", "Bearer " + coachTokens.getAccessToken()))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString(), VideoLinkResponse.class);
+
+        // get exercise video download link
+        VideoLinkResponse exerciseDownloadLink = objectMapper.readValue(mockMvc.perform(get(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/video")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString(), VideoLinkResponse.class);
+        
+        System.out.println("Exercise Links: ");
+        System.out.println(exerciseUploadLink.getUrl());
+        System.out.println(exerciseDownloadLink.getUrl());
+
+        exercise = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0);
+        assertTrue(exercise.getVideoRef().equals(exercise.getId() + ".mp4"));
 
         // update day 
         day = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0);
