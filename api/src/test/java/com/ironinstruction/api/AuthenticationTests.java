@@ -139,12 +139,12 @@ public class AuthenticationTests {
         // invalid token
         mockMvc.perform(get("/api/v1/users/hello@gmail.com")
             .header("Authorization", "Bearer " + tokens.getRefreshToken()))
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Invalid token")));
         
         // no token
         mockMvc.perform(get("/api/v1/users/hello@gmail.com"))
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("No token")));
     }
 
@@ -164,7 +164,7 @@ public class AuthenticationTests {
         mockMvc.perform(post("/api/v1/refreshtoken")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(badRefreshRequest)))
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Invalid token")));
         
         // no token
@@ -185,7 +185,7 @@ public class AuthenticationTests {
         mockMvc.perform(post("/api/v1/refreshtoken")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(refreshRequestOne)))
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Invalid token")));
         
         // valid new token

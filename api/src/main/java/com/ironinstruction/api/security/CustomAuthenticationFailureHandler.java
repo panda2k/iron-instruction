@@ -25,7 +25,7 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
         } else if (exception instanceof InvalidEmail) { // could group the following two if statements together but will leave them separate for now
             response.setStatus(400);
         } else if (exception instanceof InvalidToken) {
-            response.setStatus(400);
+            response.setStatus(403);
         } else if (exception instanceof BadCredentialsException) {
             response.setStatus(400);
         }

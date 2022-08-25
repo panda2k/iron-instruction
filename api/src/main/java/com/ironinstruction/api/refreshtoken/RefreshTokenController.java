@@ -27,7 +27,7 @@ public class RefreshTokenController {
     }
 
     @ResponseBody 
-    @ResponseStatus(value=HttpStatus.BAD_REQUEST)
+    @ResponseStatus(value=HttpStatus.FORBIDDEN)
     @ExceptionHandler(InvalidToken.class)
     public ErrorResponse invalidToken (InvalidToken e) {
         return new ErrorResponse(e.getMessage());
