@@ -13,6 +13,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordManager passwordManager;
 
+    public User cleanseUser(User user) {
+        user.setPasswordHash(null);
+        user.setPasswordSalt(null);
+
+        return user;
+    }
+
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
         this.passwordManager = new PasswordManager();

@@ -1,6 +1,7 @@
 package com.ironinstruction.api.program;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import com.ironinstruction.api.errors.ResourceNotFound;
@@ -19,6 +20,10 @@ public class ProgramService {
         Program program = new Program(coachEmail, name, description);
 
         return programRepository.insert(program);
+    }
+
+    public List<Program> findUserPrograms(String email) {
+        return programRepository.findByEmail(email); 
     }
 
     public Program findById(String id) throws ResourceNotFound {

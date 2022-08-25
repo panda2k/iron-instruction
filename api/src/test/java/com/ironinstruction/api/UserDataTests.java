@@ -1,5 +1,6 @@
 package com.ironinstruction.api;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ironinstruction.api.program.Day;
 import com.ironinstruction.api.program.Exercise;
@@ -40,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 
@@ -108,6 +110,16 @@ public class UserDataTests {
 
         String programUrlPath = "/api/v1/programs/" + createdProgram.getId();
 
+        // create second valid program
+        CreateProgramRequest secondProgramRequest = new CreateProgramRequest("get lean", "get very lean");
+        Program secondProgram = objectMapper.readValue(mockMvc.perform(post("/api/v1/programs")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(secondProgramRequest))
+            .header("Authorization", "Bearer " + this.coachTokens.getAccessToken()))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse().getContentAsString(), Program.class);
+        createdPrograms.add(secondProgram.getId());
         // assign program
         mockMvc.perform(post(programUrlPath + "/assign")
             .header("Authorization", "Bearer " + coachTokens.getAccessToken())
@@ -117,6 +129,33 @@ public class UserDataTests {
        
         assertTrue(programService.findById(createdProgram.getId()).getAthleteEmail().equals("data@gmail.com"));
         
+        // assign program to coach
+        mockMvc.perform(post(programUrlPath + "/assign")
+            .header("Authorization", "Bearer " + coachTokens.getAccessToken())
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new AssignProgramRequest("coachdata@gmail.com"))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message", containsString("Cannot assign program")));
+
+        // get coach's programs 
+        List<Program> coachPrograms = objectMapper.readValue(mockMvc.perform(get("/api/v1/programs/user/coachdata@gmail.com")
+            .header("Authorization", "Bearer " + coachTokens.getAccessToken()))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString(), new TypeReference<List<Program>>(){});
+
+        assertTrue(coachPrograms.size() == 2);
+        assertTrue(coachPrograms.get(0).getId().equals(createdProgram.getId()));
+        assertTrue(coachPrograms.get(1).getId().equals(secondProgram.getId()));
+
+        // get athlete's programs
+        List<Program> athletePrograms = objectMapper.readValue(mockMvc.perform(get("/api/v1/programs/user/data@gmail.com")
+            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString(), new TypeReference<List<Program>>(){});
+        
+        assertTrue(athletePrograms.size() == 1);
+        assertTrue(athletePrograms.get(0).getId().equals(createdProgram.getId()));
+
         // add week to program
         mockMvc.perform(post(programUrlPath + "/weeks")
             .header("Authorization", "Bearer" + coachTokens.getAccessToken())

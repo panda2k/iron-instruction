@@ -7,6 +7,7 @@ import com.ironinstruction.api.errors.ErrorResponse;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -36,9 +37,9 @@ public class UserController {
 
     // POST /users
     @PostMapping
-    public User createUser(@RequestBody CreateUserRequest createUserRequest) throws NoSuchAlgorithmException, InvalidKeySpecException, DuplicateEmail {
+    public User createUser(@RequestBody CreateUserRequest createUserRequest) throws HttpMessageNotReadableException, NoSuchAlgorithmException, InvalidKeySpecException, DuplicateEmail {
         try {
-            return userService.createUser(createUserRequest.getName(), createUserRequest.getEmail(), createUserRequest.getPassword(), createUserRequest.getUserType());
+            return userService.cleanseUser(userService.createUser(createUserRequest.getName(), createUserRequest.getEmail(), createUserRequest.getPassword(), createUserRequest.getUserType()));
         } catch(DuplicateKeyException e) {
             throw new DuplicateEmail(createUserRequest.getEmail());
         }
@@ -46,12 +47,12 @@ public class UserController {
 	
     @GetMapping("/{email}")
     public User getUser(@PathVariable String email) {
-        return userService.findByEmail(email);
+        return userService.cleanseUser(userService.findByEmail(email));
     }
 
     @PostMapping("/{email}")
 	public Athlete updateAthleteInfo(@PathVariable String email, @RequestBody UpdateAthleteRequest request) {
-        return userService.updateAthleteInfoByEmail(
+        return (Athlete) userService.cleanseUser(userService.updateAthleteInfoByEmail(
             email, 
             request.getWeightClass(),
             request.getWeight(),
@@ -60,6 +61,6 @@ public class UserController {
             request.getBenchMax(),
             request.getDeadliftMax(),
             request.getHeight()
-        );
+        ));
     }
 }

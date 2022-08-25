@@ -1,5 +1,8 @@
 package com.ironinstruction.api.program;
 
+import java.util.List;
+
+import com.ironinstruction.api.errors.InvalidRequest;
 import com.ironinstruction.api.errors.ResourceNotFound;
 import com.ironinstruction.api.requests.AssignProgramRequest;
 import com.ironinstruction.api.requests.NoteRequest;
@@ -9,6 +12,9 @@ import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateSetRequest;
 import com.ironinstruction.api.responses.VideoLinkResponse;
 import com.ironinstruction.api.security.SecurityConstants;
+import com.ironinstruction.api.user.User;
+import com.ironinstruction.api.user.UserService;
+import com.ironinstruction.api.user.UserType;
 import com.ironinstruction.api.utils.AwsS3Manager;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,10 +31,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProgramController {
     private final AwsS3Manager s3Manager;
     private final ProgramService programService;
+    private final UserService userService;
 
-    public ProgramController(ProgramService programService) {
+    public ProgramController(ProgramService programService, UserService userService) {
         this.s3Manager = new AwsS3Manager(SecurityConstants.S3_BUCKET_NAME);
         this.programService = programService; 
+        this.userService = userService;
     }
 
     @PostMapping("")
@@ -40,13 +48,22 @@ public class ProgramController {
         );
     }
 
+    @GetMapping("/user/{userEmail}")
+    public List<Program> getUserPrograms(@PathVariable String userEmail) {
+        return programService.findUserPrograms(userEmail);
+    }
+
     @GetMapping("/{programId}") 
     public Program getProgram(@PathVariable String programId) throws ResourceNotFound {
         return programService.findById(programId);
     }
 
     @PostMapping("/{programId}/assign")
-    public Program assignProgram(@PathVariable String programId, @RequestBody AssignProgramRequest request) throws ResourceNotFound {
+    public Program assignProgram(@PathVariable String programId, @RequestBody AssignProgramRequest request) throws ResourceNotFound, InvalidRequest {
+        User user = userService.findByEmail(request.getEmail());
+        if (user.getUserType().equals(UserType.COACH)) {
+            throw new InvalidRequest("Cannot assign program to coach");
+        }
         return programService.assignProgram(
             programId,
             request.getEmail()
