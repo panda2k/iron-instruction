@@ -375,7 +375,9 @@ public class UserDataTests {
         Athlete ath = (Athlete) userService.findByEmail("data@gmail.com");
         assertTrue(ath.getWeightClass().equals(validRequest.getWeightClass()));
         assertTrue(ath.getWeight() == validRequest.getWeight());
-        assertTrue(ath.getDob().equals(validRequest.getDob()));
+        assertTrue(ath.getDob().getDay() == validRequest.getDob().getDay());
+        assertTrue(ath.getDob().getYear() == validRequest.getDob().getYear());
+        assertTrue(ath.getDob().getMonth() == validRequest.getDob().getMonth());
         assertTrue(ath.getSquatMax() == validRequest.getSquatMax());
         assertTrue(ath.getBenchMax() == validRequest.getBenchMax());
         assertTrue(ath.getDeadliftMax() == validRequest.getDeadliftMax());

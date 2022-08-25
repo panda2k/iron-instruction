@@ -2,9 +2,12 @@ package com.ironinstruction.api.requests;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 public class UpdateAthleteRequest {
     private String weightClass;
     private float weight;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date dob;
     private float squatMax;
     private float benchMax;
