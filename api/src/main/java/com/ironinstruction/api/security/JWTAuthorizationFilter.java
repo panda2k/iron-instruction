@@ -1,11 +1,15 @@
 package com.ironinstruction.api.security;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ironinstruction.api.errors.AccessDenied;
 import com.ironinstruction.api.errors.InvalidToken;
 import com.ironinstruction.api.errors.ResourceNotFound;
 import com.ironinstruction.api.utils.TokenManager;
 import com.ironinstruction.api.utils.TokenType;
 import com.ironinstruction.api.program.ProgramService;
+import com.ironinstruction.api.refreshtoken.RefreshToken;
+import com.ironinstruction.api.refreshtoken.RefreshTokenService;
 import com.ironinstruction.api.program.Program;
 import com.ironinstruction.api.user.UserType;
 
@@ -15,9 +19,11 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.util.WebUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -27,11 +33,13 @@ import java.util.regex.Pattern;
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     private AuthenticationFailureHandler failureHandler;
     private ProgramService programService;
+    private RefreshTokenService refreshTokenService;
 
-    public JWTAuthorizationFilter(ProgramService programService, AuthenticationManager authenticationManager, AuthenticationFailureHandler failureHandler) {
+    public JWTAuthorizationFilter(ProgramService programService, RefreshTokenService refreshTokenService, AuthenticationManager authenticationManager, AuthenticationFailureHandler failureHandler) {
         super(authenticationManager);
         this.failureHandler = failureHandler;
         this.programService = programService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Override
@@ -44,13 +52,8 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        String header = request.getHeader(SecurityConstants.HEADER_STRING);
-        if (header == null || !header.startsWith(SecurityConstants.TOKEN_PREFIX)) {
-            this.failureHandler.onAuthenticationFailure(request, response, new InvalidToken("No token supplied "));
-            return;
-        }
         try {
-            UsernamePasswordAuthenticationToken authenticationToken = getAuthentication(request);
+            UsernamePasswordAuthenticationToken authenticationToken = getAuthentication(request, response);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             chain.doFilter(request, response);
         } catch (AuthenticationException e) {
@@ -58,15 +61,59 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
         }
     }
 
-    private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
-        String token = request
-            .getHeader(SecurityConstants.HEADER_STRING)
-            .replace(SecurityConstants.TOKEN_PREFIX, "")
-            .replaceAll(" ", "");
-
-        if (token != null) {
+    private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request, HttpServletResponse response) {
+        String token;
+        try {
+            token = (WebUtils.getCookie(request, "accessToken")).getValue();
+        } catch (NullPointerException e) {
+            throw new InvalidToken("No token supplied");
+        }
+        if (token.length() != 0) {
             // token manager throws appropriate errors if failed decode
-            String[] subject = TokenManager.verifyJWT(token, TokenType.ACCESS).getSubject().split(";");
+            String subject[];
+            try {
+                subject = TokenManager.verifyJWT(token, TokenType.ACCESS).getSubject().split(";");
+            } catch (InvalidToken e) { // attempt refresh if access token is invalid
+                if (!e.getMessage().contains(("expired"))) { 
+                    throw e;
+                }
+                String refreshToken;
+
+                try {
+                    refreshToken = (WebUtils.getCookie(request, "refreshToken")).getValue();
+                } catch (NullPointerException f) {
+                    throw new InvalidToken("No token supplied");
+                }
+
+                // verify the token
+                if (refreshToken == null) {
+                    throw new InvalidToken("Invalid access token and no refresh token");
+                }
+
+                DecodedJWT decodedRefresh = refreshTokenService.verifyRefreshToken(refreshToken);
+                refreshTokenService.deleteRefreshToken(refreshToken); 
+
+                subject = decodedRefresh.getSubject().split(";");
+                
+                // generate new tokens
+                String newRefreshToken = TokenManager.generateJWT(decodedRefresh.getSubject(), TokenType.REFRESH);
+                String newAccessToken = TokenManager.generateJWT(decodedRefresh.getSubject(), TokenType.ACCESS);
+                refreshTokenService.saveRefreshToken(new RefreshToken(newRefreshToken));
+
+                // set the new httponly cookie for the tokens
+                Cookie accessTokenCookie = new Cookie("accessToken", newAccessToken);
+                accessTokenCookie.setHttpOnly(true);
+                accessTokenCookie.setSecure(true);
+                accessTokenCookie.setMaxAge(SecurityConstants.ACCESS_EXPIRATION_TIME_MINUTES * 60);
+                response.addCookie(accessTokenCookie);
+
+                Cookie refreshTokenCookie = new Cookie("refreshToken", newRefreshToken);
+                refreshTokenCookie.setHttpOnly(true);
+                refreshTokenCookie.setSecure(true);
+                refreshTokenCookie.setMaxAge(SecurityConstants.REFRESH_EXPIRATION_TIME_MINUTES * 60);
+                response.addCookie(refreshTokenCookie);
+            }
+
             String userEmail = subject[0];
             UserType userType = UserType.valueOf(subject[1]);
 

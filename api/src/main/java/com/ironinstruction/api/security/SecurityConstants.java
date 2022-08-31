@@ -18,9 +18,7 @@ public class SecurityConstants {
         }
     }
 
-    public static final int ACCESS_EXPIRATION_TIME_MINUTES = 15; // 15 minutes
-    public static final String TOKEN_PREFIX = "Bearer";
-    public static final String HEADER_STRING = "Authorization";
+    public static final int ACCESS_EXPIRATION_TIME_MINUTES = 5; 
     public static final String SIGN_UP_URL = "/api/v1/users";
     public static final String LOGIN_URL = "/api/v1/login";
     public static final String REFRESH_URL = "/api/v1/refreshtoken";

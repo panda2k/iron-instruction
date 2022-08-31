@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ironinstruction.api.refreshtoken.RefreshToken;
 import com.ironinstruction.api.refreshtoken.RefreshTokenService;
 import com.ironinstruction.api.requests.LoginRequest;
-import com.ironinstruction.api.responses.JWTResponse;
 import com.ironinstruction.api.utils.TokenManager;
 import com.ironinstruction.api.utils.TokenType;
 
@@ -16,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -50,13 +50,20 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         // create JWT access token 
         String accessToken = TokenManager.generateJWT((String) authResult.getPrincipal(), TokenType.ACCESS);
+        Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(true);
         
         // create JWT refresh token 
         RefreshToken refreshToken = new RefreshToken(TokenManager.generateJWT((String) authResult.getPrincipal(), TokenType.REFRESH));
         refreshTokenService.saveRefreshToken(refreshToken);
-        JWTResponse body = new JWTResponse(accessToken, refreshToken.getToken());
-        response.setContentType("application/json");
-        response.getWriter().write(new ObjectMapper().writeValueAsString(body));
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken.getToken());
+        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setHttpOnly(true);
+
+        // send the final response
+        response.addCookie(accessTokenCookie);
+        response.addCookie(refreshTokenCookie);
         response.getWriter().flush(); // commits the response written above
     }
 }

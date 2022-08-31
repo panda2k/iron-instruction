@@ -25,8 +25,9 @@ public class TokenManager {
         calendar.setTime(new Date(System.currentTimeMillis()));
         // super super edge case but if a refresh token is exchanged 
         // instantly after its creation, an identical token will be returned
-        // therefore, add a random amount of minutes (1-15) to the expiration
-        calendar.add(Calendar.MINUTE, (int) Math.ceil(Math.random() * 15) + (tokenType == TokenType.ACCESS ? SecurityConstants.ACCESS_EXPIRATION_TIME_MINUTES : SecurityConstants.REFRESH_EXPIRATION_TIME_MINUTES));
+        // therefore, add a random amount of seconds (1-60) to the expiration
+        calendar.add(Calendar.MINUTE, (tokenType == TokenType.ACCESS ? SecurityConstants.ACCESS_EXPIRATION_TIME_MINUTES : SecurityConstants.REFRESH_EXPIRATION_TIME_MINUTES));
+        calendar.add(Calendar.SECOND, (int) Math.ceil(Math.random() * 60));
         return JWT.create().withSubject(body).withExpiresAt(calendar.getTime()).sign(getAlgorithm(tokenType));
     }
 

@@ -39,9 +39,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.http.Cookie;
 
 import static org.hamcrest.Matchers.containsString;
 
@@ -64,8 +70,16 @@ public class UserDataTests {
     private ArrayList<String> createdAccounts;
     private ArrayList<String> createdPrograms;
 
-    private JWTResponse athleteTokens;
-    private JWTResponse coachTokens;
+    private Cookie athleteAccess;
+    private Cookie coachAccess;
+
+    private String getCookieValue(String header, String cookieName) {
+        String regexPattern = cookieName + "=([^;]+ *);";
+        Pattern pattern = Pattern.compile(regexPattern);
+        Matcher matcher = pattern.matcher(header);
+        matcher.find();
+        return matcher.group(1);
+    }
 
     public UserDataTests () {
         this.createdAccounts = new ArrayList<String>();  
@@ -84,14 +98,15 @@ public class UserDataTests {
             .content(objectMapper.writeValueAsString(new LoginRequest("data@gmail.com", "test"))))
             .andReturn();
         
-        this.athleteTokens = objectMapper.readValue(validAthleteResult.getResponse().getContentAsString(), JWTResponse.class);
+        
+        this.athleteAccess = new Cookie("accessToken", getCookieValue(validAthleteResult.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
 
         MvcResult validCoachResult = mockMvc.perform(post("/api/v1/login")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new LoginRequest("coachdata@gmail.com", "test"))))
             .andReturn();
-        
-        this.coachTokens = objectMapper.readValue(validCoachResult.getResponse().getContentAsString(), JWTResponse.class);
+
+        this.coachAccess= new Cookie("accessToken", getCookieValue(validCoachResult.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
     }
 
     @Test void testProgramData() throws Exception {
@@ -100,7 +115,7 @@ public class UserDataTests {
         Program createdProgram = objectMapper.readValue(mockMvc.perform(post("/api/v1/programs")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(createProgramRequest))
-            .header("Authorization", "Bearer " + this.coachTokens.getAccessToken()))
+            .cookie(coachAccess))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse().getContentAsString(), Program.class);
@@ -115,14 +130,14 @@ public class UserDataTests {
         Program secondProgram = objectMapper.readValue(mockMvc.perform(post("/api/v1/programs")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(secondProgramRequest))
-            .header("Authorization", "Bearer " + this.coachTokens.getAccessToken()))
+            .cookie(coachAccess))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse().getContentAsString(), Program.class);
         createdPrograms.add(secondProgram.getId());
         // assign program
         mockMvc.perform(post(programUrlPath + "/assign")
-            .header("Authorization", "Bearer " + coachTokens.getAccessToken())
+            .cookie(coachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new AssignProgramRequest("data@gmail.com"))))
             .andExpect(status().isOk());
@@ -131,7 +146,7 @@ public class UserDataTests {
         
         // assign program to coach
         mockMvc.perform(post(programUrlPath + "/assign")
-            .header("Authorization", "Bearer " + coachTokens.getAccessToken())
+            .cookie(coachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new AssignProgramRequest("coachdata@gmail.com"))))
             .andExpect(status().isBadRequest())
@@ -139,7 +154,7 @@ public class UserDataTests {
 
         // get coach's programs 
         List<Program> coachPrograms = objectMapper.readValue(mockMvc.perform(get("/api/v1/programs/user/coachdata@gmail.com")
-            .header("Authorization", "Bearer " + coachTokens.getAccessToken()))
+            .cookie(coachAccess))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString(), new TypeReference<List<Program>>(){});
 
@@ -149,7 +164,7 @@ public class UserDataTests {
 
         // get athlete's programs
         List<Program> athletePrograms = objectMapper.readValue(mockMvc.perform(get("/api/v1/programs/user/data@gmail.com")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .cookie(athleteAccess))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString(), new TypeReference<List<Program>>(){});
         
@@ -158,7 +173,7 @@ public class UserDataTests {
 
         // add week to program
         mockMvc.perform(post(programUrlPath + "/weeks")
-            .header("Authorization", "Bearer" + coachTokens.getAccessToken())
+            .cookie(coachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("week 1"))))
             .andExpect(status().isOk());
@@ -167,7 +182,7 @@ public class UserDataTests {
 
         // add day to week
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days")
-            .header("Authorization", "Bearer" + coachTokens.getAccessToken())
+            .cookie(coachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("day 1"))))
             .andExpect(status().isOk());
@@ -178,7 +193,7 @@ public class UserDataTests {
         // add exercise to day
         CreateExerciseRequest createExerciseRequest = new CreateExerciseRequest("Bench", "bench more", "");
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises")
-            .header("Authorization", "Bearer" + coachTokens.getAccessToken())
+            .cookie(coachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(createExerciseRequest)))
             .andExpect(status().isOk());
@@ -188,7 +203,7 @@ public class UserDataTests {
         // add set to exercise (rpe)
         CreateSetRequest createSetRequestRpe = new CreateSetRequest(0, 8, 12, 100, PercentageOptions.Bench, "note", true);
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets")
-            .header("Authorization", "Bearer" + coachTokens.getAccessToken())
+            .cookie(coachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(createSetRequestRpe)))
             .andExpect(status().isOk());
@@ -201,7 +216,7 @@ public class UserDataTests {
         // add set to exercise (reps)
         CreateSetRequest createSetRequestReps = new CreateSetRequest(10, -1, 12, 100, PercentageOptions.Bench, "note", true);
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets")
-            .header("Authorization", "Bearer" + coachTokens.getAccessToken())
+            .cookie(coachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(createSetRequestReps)))
             .andExpect(status().isOk());
@@ -217,7 +232,7 @@ public class UserDataTests {
         mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets/" + setReps.getId())
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(finishSetRequest))
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .cookie(athleteAccess))
             .andExpect(status().isOk());
         setReps = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0).getSets().get(1);
         assertTrue(setReps.getCompletedReps() == finishSetRequest.getRepsDone());
@@ -225,19 +240,19 @@ public class UserDataTests {
 
         // get non existent download link  
         mockMvc.perform(get(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets/" + set.getId() + "/video")
-            .header("Authorization", "Bearer " + coachTokens.getAccessToken()))
+            .cookie(coachAccess))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message", containsString("not found")));
 
         // get set video upload link
         VideoLinkResponse setUploadLink = objectMapper.readValue(mockMvc.perform(get(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets/" + set.getId() + "/video/upload")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .cookie(athleteAccess))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString(), VideoLinkResponse.class);
 
         // get set video download link
         VideoLinkResponse setDownloadLink = objectMapper.readValue(mockMvc.perform(get(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets/" + set.getId() + "/video")
-            .header("Authorization", "Bearer " + coachTokens.getAccessToken()))
+            .cookie(coachAccess))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString(), VideoLinkResponse.class);
         
@@ -250,19 +265,19 @@ public class UserDataTests {
 
         // get non-existent download link 
         mockMvc.perform(get(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/video")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .cookie(athleteAccess))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message", containsString("not found")));
 
         // get exercise video upload link
         VideoLinkResponse exerciseUploadLink = objectMapper.readValue(mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/video/upload")
-            .header("Authorization", "Bearer " + coachTokens.getAccessToken()))
+            .cookie(coachAccess))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString(), VideoLinkResponse.class);
 
         // get exercise video download link
         VideoLinkResponse exerciseDownloadLink = objectMapper.readValue(mockMvc.perform(get(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/video")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .cookie(athleteAccess))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString(), VideoLinkResponse.class);
         
@@ -278,7 +293,7 @@ public class UserDataTests {
         String dayId = day.getId();
         day.findExerciseById(exercise.getId()).getSets().remove(0);
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/update")
-            .header("Authorization", "Bearer " + coachTokens.getAccessToken())
+            .cookie(coachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(day)))
             .andExpect(status().isOk());
@@ -289,7 +304,7 @@ public class UserDataTests {
 
         // update week note
         mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/notes")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .cookie(athleteAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("Good week"))))
             .andExpect(status().isOk()); 
@@ -298,7 +313,7 @@ public class UserDataTests {
 
         // update day note 
         mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/notes")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .cookie(athleteAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("Good day"))))
             .andExpect(status().isOk()); 
@@ -307,7 +322,7 @@ public class UserDataTests {
 
         // update exercise note
         mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/notes")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .cookie(athleteAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("Good bench"))))
             .andExpect(status().isOk()); 
@@ -316,13 +331,13 @@ public class UserDataTests {
 
         // get invalid program 
         mockMvc.perform(get("/api/v1/programs/fdsjafjkas")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .cookie(athleteAccess))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Invalid resource")));
 
         // add invalid week note
         mockMvc.perform(patch(programUrlPath + "/weeks/fjdkskfsd/notes")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .cookie(athleteAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("bad"))))
             .andExpect(status().isNotFound())
@@ -330,7 +345,7 @@ public class UserDataTests {
 
         // add invalid day note
         mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/fjdsjkfksd/notes")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .cookie(athleteAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("bad"))))
             .andExpect(status().isNotFound())
@@ -338,7 +353,7 @@ public class UserDataTests {
         
         // add invalid exercise note 
         mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/fdsjkfkjdskj/notes")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken())
+            .cookie(athleteAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("bad"))))
             .andExpect(status().isNotFound())
@@ -348,7 +363,7 @@ public class UserDataTests {
         mockMvc.perform(patch(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets/fdsjkkjlfsdjkls")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(finishSetRequest))
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .cookie(athleteAccess))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message", containsString("not found")));
     }
@@ -359,7 +374,7 @@ public class UserDataTests {
         UpdateAthleteRequest validRequest = new UpdateAthleteRequest(
             "67.5kg",
             (float) 71.2,
-            new Date(System.currentTimeMillis()),
+            new Date(System.currentTimeMillis() - OffsetDateTime.now().getOffset().getTotalSeconds() * 1000),
             150,
             100,
             175,
@@ -369,10 +384,13 @@ public class UserDataTests {
         mockMvc.perform(post("/api/v1/users/data@gmail.com")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(validRequest))
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .cookie(athleteAccess))
             .andExpect(status().isOk());
 
         Athlete ath = (Athlete) userService.findByEmail("data@gmail.com");
+        System.out.println("12345");
+        System.out.println(ath.getDob().getTime());
+        System.out.println(validRequest.getDob().getTime());
         assertTrue(ath.getWeightClass().equals(validRequest.getWeightClass()));
         assertTrue(ath.getWeight() == validRequest.getWeight());
         assertTrue(ath.getDob().getDay() == validRequest.getDob().getDay());
@@ -387,13 +405,13 @@ public class UserDataTests {
         mockMvc.perform(post("/api/v1/users/data1@gmail.com")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(validRequest))
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .cookie(athleteAccess))
             .andExpect(status().isForbidden());
        
         // test empty body
         mockMvc.perform(post("/api/v1/users/data@gmail.com")
             .contentType("application/json")
-            .header("Authorization", "Bearer " + athleteTokens.getAccessToken()))
+            .cookie(athleteAccess))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message", containsString("Invalid body")));
     }

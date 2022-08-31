@@ -6,12 +6,12 @@ import com.ironinstruction.api.requests.NoteRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateUserRequest;
 import com.ironinstruction.api.requests.LoginRequest;
-import com.ironinstruction.api.requests.RefreshTokenRequest;
-import com.ironinstruction.api.responses.JWTResponse;
 import com.ironinstruction.api.user.UserService;
 import com.ironinstruction.api.user.UserType;
 import com.ironinstruction.api.program.Program;
 import com.ironinstruction.api.program.ProgramService;
+import com.ironinstruction.api.utils.TokenManager;
+import com.ironinstruction.api.utils.TokenType;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -30,6 +30,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.http.Cookie;
 
 import static org.hamcrest.Matchers.containsString;
 
@@ -55,6 +60,14 @@ public class AuthenticationTests {
     public AuthenticationTests() {
         this.createdPrograms = new ArrayList<String>();
         this.createdAccounts = new ArrayList<String>();  
+    }
+
+    private String getCookieValue(String header, String cookieName) {
+        String regexPattern = cookieName + "=([^;]+ *);";
+        Pattern pattern = Pattern.compile(regexPattern);
+        Matcher matcher = pattern.matcher(header);
+        matcher.find();
+        return matcher.group(1);
     }
 
     @BeforeAll
@@ -107,11 +120,8 @@ public class AuthenticationTests {
             .content(objectMapper.writeValueAsString(validLogin)))
             .andExpect(status().isOk())
             .andReturn();
-        
-        JWTResponse tokens = objectMapper.readValue(validResult.getResponse().getContentAsString(), JWTResponse.class);
-        assertTrue(tokens.getAccessToken().length() != 0);
-        assertTrue(tokens.getRefreshToken().length() != 0);
-
+        assertTrue(validResult.getResponse().getCookie("accessToken").getValue().length() != 0);
+        assertTrue(validResult.getResponse().getCookie("refreshToken").getValue().length() != 0);
     }
 
     @Test 
@@ -122,23 +132,24 @@ public class AuthenticationTests {
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(validLogin)))
             .andReturn();
-        
-        JWTResponse tokens = objectMapper.readValue(validResult.getResponse().getContentAsString(), JWTResponse.class);
+
+        Cookie accessTokenCookie = new Cookie("accessToken", getCookieValue(validResult.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
+        Cookie refreshTokenCookie = new Cookie("refreshToken", getCookieValue(validResult.getResponse().getHeaders("set-cookie").get(1), "refreshToken"));
         
         // invalid permissions
         mockMvc.perform(get("/api/v1/users/test@gmail.com")
-            .header("Authorization", "Bearer " + tokens.getAccessToken()))
+            .cookie(accessTokenCookie))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
         
         // valid request
         mockMvc.perform(get("/api/v1/users/hello@gmail.com")
-            .header("Authorization", "Bearer " + tokens.getAccessToken()))
+            .cookie(accessTokenCookie))
             .andExpect(status().isOk());
        
         // invalid token
         mockMvc.perform(get("/api/v1/users/hello@gmail.com")
-            .header("Authorization", "Bearer " + tokens.getRefreshToken()))
+            .cookie(new Cookie("accessToken", refreshTokenCookie.getValue())))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Invalid token")));
         
@@ -156,43 +167,43 @@ public class AuthenticationTests {
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(validLogin)))
             .andReturn();
-        
-        JWTResponse tokens = objectMapper.readValue(validResult.getResponse().getContentAsString(), JWTResponse.class);
-        
+
+        Cookie expiredAccessCookie = new Cookie("accessToken", TokenManager.generateJWT("hello@gmail.com;COACH", TokenType.ACCESS, new Date(0)));
+        Cookie refreshTokenCookie = new Cookie("refreshToken", getCookieValue(validResult.getResponse().getHeaders("set-cookie").get(1), "refreshToken"));
+         
         // invalid token
-        RefreshTokenRequest badRefreshRequest = new RefreshTokenRequest(tokens.getAccessToken());
-        mockMvc.perform(post("/api/v1/refreshtoken")
-            .contentType("application/json")
-            .content(objectMapper.writeValueAsString(badRefreshRequest)))
+        mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+            .cookie(expiredAccessCookie)
+            .cookie(new Cookie("refreshToken", "hfdhjsjk;fasd")))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Invalid token")));
         
         // no token
-        mockMvc.perform(post("/api/v1/refreshtoken"))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message", containsString("Invalid body")));
+        mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+            .cookie(expiredAccessCookie))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("No token")));
 
         // valid refresh
-        RefreshTokenRequest refreshRequestOne = new RefreshTokenRequest(tokens.getRefreshToken());
-        MvcResult newTokenResponse =  mockMvc.perform(post("/api/v1/refreshtoken")
-            .contentType("application/json")
-            .content(objectMapper.writeValueAsString(refreshRequestOne)))
+        MvcResult newTokenResponse =  mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+            .cookie(expiredAccessCookie)
+            .cookie(refreshTokenCookie))
             .andExpect(status().isOk())
             .andReturn();
-        JWTResponse newTokens = objectMapper.readValue(newTokenResponse.getResponse().getContentAsString(), JWTResponse.class);
+
+        assertTrue(newTokenResponse.getResponse().getHeaders("set-cookie").size() == 2);
 
         // old token
-        mockMvc.perform(post("/api/v1/refreshtoken")
-            .contentType("application/json")
-            .content(objectMapper.writeValueAsString(refreshRequestOne)))
+        mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+            .cookie(expiredAccessCookie)
+            .cookie(refreshTokenCookie))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Invalid token")));
         
         // valid new token
-        RefreshTokenRequest refreshRequestTwo = new RefreshTokenRequest(newTokens.getRefreshToken());
-        mockMvc.perform(post("/api/v1/refreshtoken")
-            .contentType("application/json")
-            .content(objectMapper.writeValueAsString(refreshRequestTwo)))
+        mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+            .cookie(expiredAccessCookie)
+            .cookie(new Cookie("refreshToken", getCookieValue(newTokenResponse.getResponse().getHeaders("set-cookie").get(1), "refreshToken"))))
             .andExpect(status().isOk());
     }
 
@@ -206,32 +217,36 @@ public class AuthenticationTests {
         this.createdAccounts.add("badcoach@gmail.com");
         
         LoginRequest validCoach = new LoginRequest("hello@gmail.com", "test");
-        JWTResponse validCoachTokens = objectMapper.readValue(mockMvc.perform(post("/api/v1/login")
+        MvcResult validCoachResponse = mockMvc.perform(post("/api/v1/login")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(validCoach)))
-            .andReturn()
-            .getResponse().getContentAsString(), JWTResponse.class);
+            .andReturn();
+
+        Cookie validCoachAccess = new Cookie("accessToken", getCookieValue(validCoachResponse.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
 
         LoginRequest validAthlete = new LoginRequest("ath@gmail.com", "test");
-        JWTResponse validAthleteTokens = objectMapper.readValue(mockMvc.perform(post("/api/v1/login")
+        MvcResult validAthleteResponse = mockMvc.perform(post("/api/v1/login")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(validAthlete)))
-            .andReturn()
-            .getResponse().getContentAsString(), JWTResponse.class);
+            .andReturn();
+        System.out.println(validCoachAccess.getValue());
+        Cookie validAthleteAccess = new Cookie("accessToken", getCookieValue(validAthleteResponse.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
 
         LoginRequest badAthlete = new LoginRequest("badath@gmail.com", "test");
-        JWTResponse badAthleteTokens = objectMapper.readValue(mockMvc.perform(post("/api/v1/login")
+        MvcResult badAthleteResponse = mockMvc.perform(post("/api/v1/login")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(badAthlete)))
-            .andReturn()
-            .getResponse().getContentAsString(), JWTResponse.class);
+            .andReturn();
+
+        Cookie badAthleteAccess = new Cookie("accessToken", getCookieValue(badAthleteResponse.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
 
         LoginRequest badCoach = new LoginRequest("badcoach@gmail.com", "test");
-        JWTResponse badCoachTokens = objectMapper.readValue(mockMvc.perform(post("/api/v1/login")
+        MvcResult badCoachResponse = mockMvc.perform(post("/api/v1/login")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(badCoach)))
-            .andReturn()
-            .getResponse().getContentAsString(), JWTResponse.class);
+            .andReturn();
+
+        Cookie badCoachAccess = new Cookie("accessToken", getCookieValue(badCoachResponse.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
 
         // create program as athlete 
         CreateProgramRequest createProgramRequest = new CreateProgramRequest("strong", "get strong");
@@ -239,7 +254,7 @@ public class AuthenticationTests {
         mockMvc.perform(post("/api/v1/programs")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(createProgramRequest))
-            .header("Authorization", "Bearer " + validAthleteTokens.getAccessToken()))
+            .cookie(validAthleteAccess))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Only coach")));
         
@@ -247,7 +262,7 @@ public class AuthenticationTests {
         Program createdProgram = objectMapper.readValue(mockMvc.perform(post("/api/v1/programs")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(createProgramRequest))
-            .header("Authorization", "Bearer " + validCoachTokens.getAccessToken()))
+            .cookie(validCoachAccess))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse().getContentAsString(), Program.class);
@@ -258,14 +273,14 @@ public class AuthenticationTests {
 
         // assign program
         mockMvc.perform(post(programUrlPath + "/assign")
-            .header("Authorization", "Bearer " + validCoachTokens.getAccessToken())
+            .cookie(validCoachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new AssignProgramRequest("ath@gmail.com"))))
             .andExpect(status().isOk());
         
         // assign program as invalid coach
         mockMvc.perform(post(programUrlPath + "/assign")
-            .header("Authorization", "Bearer " + badCoachTokens.getAccessToken())
+            .cookie(badCoachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new AssignProgramRequest("ath@gmail.com"))))
             .andExpect(status().isForbidden())
@@ -273,7 +288,7 @@ public class AuthenticationTests {
 
         // assign program as athlete 
         mockMvc.perform(post(programUrlPath + "/assign")
-            .header("Authorization", "Bearer " + validAthleteTokens.getAccessToken())
+            .cookie(validAthleteAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new AssignProgramRequest("ath@gmail.com"))))
             .andExpect(status().isForbidden())
@@ -281,7 +296,7 @@ public class AuthenticationTests {
 
         // get program as coach
         assertDoesNotThrow(() -> objectMapper.readValue(mockMvc.perform(get(programUrlPath)
-            .header("Authorization", "Bearer " + validCoachTokens.getAccessToken()))
+            .cookie(validCoachAccess))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value(createdProgram.getName()))
             .andReturn()
@@ -289,7 +304,7 @@ public class AuthenticationTests {
 
         // get program as athlete
         assertDoesNotThrow(() -> objectMapper.readValue(mockMvc.perform(get(programUrlPath)
-            .header("Authorization", "Bearer " + validAthleteTokens.getAccessToken()))
+            .cookie(validAthleteAccess))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value(createdProgram.getName()))
             .andReturn()
@@ -297,19 +312,19 @@ public class AuthenticationTests {
 
         // get program with unauthorized coach 
         mockMvc.perform(get(programUrlPath)
-            .header("Authorization", "Bearer " + badAthleteTokens.getAccessToken()))
+            .cookie(badAthleteAccess))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
 
         // get program with unautorized athlete
         mockMvc.perform(get(programUrlPath)
-            .header("Authorization", "Bearer " + badCoachTokens.getAccessToken()))
+            .cookie(badCoachAccess))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
        
         // add to program as coach
         Program updatedProgram = objectMapper.readValue(mockMvc.perform(post(programUrlPath + "/weeks")
-            .header("Authorization", "Bearer " + validCoachTokens.getAccessToken())
+            .cookie(validCoachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isOk())
@@ -317,7 +332,7 @@ public class AuthenticationTests {
 
         // add to program as athlete
         mockMvc.perform(post(programUrlPath + "/weeks")
-            .header("Authorization", "Bearer " + validAthleteTokens.getAccessToken())
+            .cookie(validAthleteAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isForbidden())
@@ -325,7 +340,7 @@ public class AuthenticationTests {
 
         // add to program as bad coach 
         mockMvc.perform(post(programUrlPath + "/weeks")
-            .header("Authorization", "Bearer " + badCoachTokens.getAccessToken())
+            .cookie(badCoachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isForbidden())
@@ -333,7 +348,7 @@ public class AuthenticationTests {
 
         // add to athlete notes as coach
         mockMvc.perform(patch(programUrlPath + "/weeks/" + updatedProgram.getWeeks().get(0).getId() + "/notes")
-            .header("Authorization", "Bearer " + validCoachTokens.getAccessToken())
+            .cookie(validCoachAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isForbidden())
@@ -341,7 +356,7 @@ public class AuthenticationTests {
 
         // add to athlete note as athlete
         mockMvc.perform(patch(programUrlPath + "/weeks/" + updatedProgram.getWeeks().get(0).getId() + "/notes")
-            .header("Authorization", "Bearer " + validAthleteTokens.getAccessToken())
+            .cookie(validAthleteAccess)
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isOk());
