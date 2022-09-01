@@ -8,6 +8,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -45,15 +46,17 @@ public class UserController {
         }
     }
 	
-    @GetMapping("/{email}")
-    public User getUser(@PathVariable String email) {
-        return userService.cleanseUser(userService.findByEmail(email));
+    @GetMapping("/me")
+    public User getUser() {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+        return userService.cleanseUser(userService.findByEmail(userEmail));
     }
 
-    @PostMapping("/{email}")
-	public Athlete updateAthleteInfo(@PathVariable String email, @RequestBody UpdateAthleteRequest request) {
+    @PostMapping("/me")
+	public Athlete updateAthleteInfo(@RequestBody UpdateAthleteRequest request) {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
         return (Athlete) userService.cleanseUser(userService.updateAthleteInfoByEmail(
-            email, 
+            userEmail, 
             request.getWeightClass(),
             request.getWeight(),
             request.getDob(),

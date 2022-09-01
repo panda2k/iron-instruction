@@ -136,14 +136,8 @@ public class AuthenticationTests {
         Cookie accessTokenCookie = new Cookie("accessToken", getCookieValue(validResult.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
         Cookie refreshTokenCookie = new Cookie("refreshToken", getCookieValue(validResult.getResponse().getHeaders("set-cookie").get(1), "refreshToken"));
         
-        // invalid permissions
-        mockMvc.perform(get("/api/v1/users/test@gmail.com")
-            .cookie(accessTokenCookie))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message", containsString("doesn't have permission")));
-        
         // valid request
-        mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+        mockMvc.perform(get("/api/v1/users/me")
             .cookie(accessTokenCookie))
             .andExpect(status().isOk());
        

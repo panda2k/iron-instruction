@@ -48,8 +48,9 @@ public class ProgramController {
         );
     }
 
-    @GetMapping("/user/{userEmail}")
-    public List<Program> getUserPrograms(@PathVariable String userEmail) {
+    @GetMapping("/user/me")
+    public List<Program> getUserPrograms() {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
         return programService.findUserPrograms(userEmail);
     }
 

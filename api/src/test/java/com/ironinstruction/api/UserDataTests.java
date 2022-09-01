@@ -133,6 +133,7 @@ public class UserDataTests {
             .andReturn()
             .getResponse().getContentAsString(), Program.class);
         createdPrograms.add(secondProgram.getId());
+
         // assign program
         mockMvc.perform(post(programUrlPath + "/assign")
             .cookie(coachAccess)
@@ -151,7 +152,7 @@ public class UserDataTests {
             .andExpect(jsonPath("$.message", containsString("Cannot assign program")));
 
         // get coach's programs 
-        List<Program> coachPrograms = objectMapper.readValue(mockMvc.perform(get("/api/v1/programs/user/coachdata@gmail.com")
+        List<Program> coachPrograms = objectMapper.readValue(mockMvc.perform(get("/api/v1/programs/user/me")
             .cookie(coachAccess))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString(), new TypeReference<List<Program>>(){});
@@ -161,7 +162,7 @@ public class UserDataTests {
         assertTrue(coachPrograms.get(1).getId().equals(secondProgram.getId()));
 
         // get athlete's programs
-        List<Program> athletePrograms = objectMapper.readValue(mockMvc.perform(get("/api/v1/programs/user/data@gmail.com")
+        List<Program> athletePrograms = objectMapper.readValue(mockMvc.perform(get("/api/v1/programs/user/me")
             .cookie(athleteAccess))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString(), new TypeReference<List<Program>>(){});
@@ -379,7 +380,7 @@ public class UserDataTests {
             65
         );
         
-        mockMvc.perform(post("/api/v1/users/data@gmail.com")
+        mockMvc.perform(post("/api/v1/users/me")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(validRequest))
             .cookie(athleteAccess))
@@ -396,15 +397,8 @@ public class UserDataTests {
         assertTrue(ath.getDeadliftMax() == validRequest.getDeadliftMax());
         assertTrue(ath.getHeight() == validRequest.getHeight());
        
-        // test invalid user
-        mockMvc.perform(post("/api/v1/users/data1@gmail.com")
-            .contentType("application/json")
-            .content(objectMapper.writeValueAsString(validRequest))
-            .cookie(athleteAccess))
-            .andExpect(status().isForbidden());
-       
         // test empty body
-        mockMvc.perform(post("/api/v1/users/data@gmail.com")
+        mockMvc.perform(post("/api/v1/users/me")
             .contentType("application/json")
             .cookie(athleteAccess))
             .andExpect(status().isBadRequest())

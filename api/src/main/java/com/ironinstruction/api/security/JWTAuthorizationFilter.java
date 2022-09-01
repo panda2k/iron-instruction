@@ -1,15 +1,11 @@
 package com.ironinstruction.api.security;
 
-import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ironinstruction.api.errors.AccessDenied;
 import com.ironinstruction.api.errors.InvalidToken;
 import com.ironinstruction.api.errors.ResourceNotFound;
 import com.ironinstruction.api.utils.TokenManager;
 import com.ironinstruction.api.utils.TokenType;
 import com.ironinstruction.api.program.ProgramService;
-import com.ironinstruction.api.refreshtoken.RefreshToken;
-import com.ironinstruction.api.refreshtoken.RefreshTokenService;
 import com.ironinstruction.api.program.Program;
 import com.ironinstruction.api.user.UserType;
 
@@ -23,7 +19,6 @@ import org.springframework.web.util.WebUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -33,13 +28,11 @@ import java.util.regex.Pattern;
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     private AuthenticationFailureHandler failureHandler;
     private ProgramService programService;
-    private RefreshTokenService refreshTokenService;
 
-    public JWTAuthorizationFilter(ProgramService programService, RefreshTokenService refreshTokenService, AuthenticationManager authenticationManager, AuthenticationFailureHandler failureHandler) {
+    public JWTAuthorizationFilter(ProgramService programService, AuthenticationManager authenticationManager, AuthenticationFailureHandler failureHandler) {
         super(authenticationManager);
         this.failureHandler = failureHandler;
         this.programService = programService;
-        this.refreshTokenService = refreshTokenService;
     }
 
     @Override
@@ -78,43 +71,39 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
             if (userEmail != null) {
                 // if they are requesting a user's specific info, make sure they are that user
                 String requestUrl = request.getRequestURI().substring(request.getContextPath().length());
-
-                if (requestUrl.contains("@")) {
-                    Pattern emailRegex = Pattern.compile("[a-zA-Z0-9-_.]+@[a-zA-Z0-9-_.]+");
-                    Matcher matchEmail = emailRegex.matcher(requestUrl);
-                    if (matchEmail.find() && !userEmail.equals(matchEmail.group())) {
-                        throw new AccessDenied("Account doesn't have permission to access requested resource");
-                    }
-                } else if (requestUrl.contains("programs")) {
-                    if (requestUrl.equals("/api/v1/programs")) {
-                        if (userType != UserType.COACH) {
-                            throw new AccessDenied("Only coach accounts can create a program");
-                        }
-                    } else {
-                        Pattern programIdRegex = Pattern.compile("(?<=\\/programs\\/)[a-z0-9]+");
-                        Matcher matchProgramId = programIdRegex.matcher(requestUrl);
-                        matchProgramId.find();
-                        String programId = matchProgramId.group();
-                        Program program;
-                        try {
-                            program = programService.findById(programId);
-                        } catch (ResourceNotFound e) { // kind of a hacky solution
-                            throw new AccessDenied("Invalid resource requested");
-                        }
-                        // VALID COACH EMAIL -> NOT PATCH REQUEST -> GOOD
-                        // INVALID COACH EMAIL -> VALID ATHLETE -> NON-POST-METHOD -> GOOD
-                        if (!program.getCoachEmail().equals(userEmail)) {
-                            // ALL POST REQUESTS ARE DONE BY COACHES
-                            // ATHLETES DO PUTS
-                            if (program.getAthleteEmail().equals(userEmail)) {
-                                if (request.getMethod().equals("POST")) {
-                                    throw new AccessDenied("Only coaches can create new resources");
-                                }
-                            } else {
-                                throw new AccessDenied("Account doesn't have permission to access requested resource");
+                // no need to check specific security on me urls
+                if (!requestUrl.contains("me")) {
+                    if (requestUrl.contains("programs")) {
+                        if (requestUrl.equals("/api/v1/programs")) {
+                            if (userType != UserType.COACH) {
+                                throw new AccessDenied("Only coach accounts can create a program");
                             }
-                        } else if (request.getMethod().equals("PATCH")) {
-                            throw new AccessDenied("Coaches can't use patch requests");
+                        } else {
+                            Pattern programIdRegex = Pattern.compile("(?<=\\/programs\\/)[a-z0-9]+");
+                            Matcher matchProgramId = programIdRegex.matcher(requestUrl);
+                            matchProgramId.find();
+                            String programId = matchProgramId.group();
+                            Program program;
+                            try {
+                                program = programService.findById(programId);
+                            } catch (ResourceNotFound e) { // kind of a hacky solution
+                                throw new AccessDenied("Invalid resource requested");
+                            }
+                            // VALID COACH EMAIL -> NOT PATCH REQUEST -> GOOD
+                            // INVALID COACH EMAIL -> VALID ATHLETE -> NON-POST-METHOD -> GOOD
+                            if (!program.getCoachEmail().equals(userEmail)) {
+                                // ALL POST REQUESTS ARE DONE BY COACHES
+                                // ATHLETES DO PUTS
+                                if (program.getAthleteEmail().equals(userEmail)) {
+                                    if (request.getMethod().equals("POST")) {
+                                        throw new AccessDenied("Only coaches can create new resources");
+                                    }
+                                } else {
+                                    throw new AccessDenied("Account doesn't have permission to access requested resource");
+                                }
+                            } else if (request.getMethod().equals("PATCH")) {
+                                throw new AccessDenied("Coaches can't use patch requests");
+                            }
                         }
                     }
                 }
