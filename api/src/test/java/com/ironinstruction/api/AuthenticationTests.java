@@ -172,20 +172,20 @@ public class AuthenticationTests {
         Cookie refreshTokenCookie = new Cookie("refreshToken", getCookieValue(validResult.getResponse().getHeaders("set-cookie").get(1), "refreshToken"));
          
         // invalid token
-        mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+        mockMvc.perform(post("/api/v1/refreshtoken")
             .cookie(expiredAccessCookie)
             .cookie(new Cookie("refreshToken", "hfdhjsjk;fasd")))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Invalid token")));
         
         // no token
-        mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+        mockMvc.perform(post("/api/v1/refreshtoken")
             .cookie(expiredAccessCookie))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("No token")));
 
         // valid refresh
-        MvcResult newTokenResponse =  mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+        MvcResult newTokenResponse =  mockMvc.perform(post("/api/v1/refreshtoken")
             .cookie(expiredAccessCookie)
             .cookie(refreshTokenCookie))
             .andExpect(status().isOk())
@@ -194,14 +194,14 @@ public class AuthenticationTests {
         assertTrue(newTokenResponse.getResponse().getHeaders("set-cookie").size() == 2);
 
         // old token
-        mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+        mockMvc.perform(post("/api/v1/refreshtoken")
             .cookie(expiredAccessCookie)
             .cookie(refreshTokenCookie))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Invalid token")));
         
         // valid new token
-        mockMvc.perform(get("/api/v1/users/hello@gmail.com")
+        mockMvc.perform(post("/api/v1/refreshtoken")
             .cookie(expiredAccessCookie)
             .cookie(new Cookie("refreshToken", getCookieValue(newTokenResponse.getResponse().getHeaders("set-cookie").get(1), "refreshToken"))))
             .andExpect(status().isOk());

@@ -68,58 +68,15 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
         } catch (NullPointerException e) {
             throw new InvalidToken("No token supplied");
         }
+
         if (token.length() != 0) {
             // token manager throws appropriate errors if failed decode
-            String subject[];
-            try {
-                subject = TokenManager.verifyJWT(token, TokenType.ACCESS).getSubject().split(";");
-            } catch (InvalidToken e) { // attempt refresh if access token is invalid
-                if (!e.getMessage().contains(("expired"))) { 
-                    throw e;
-                }
-                String refreshToken;
-
-                try {
-                    refreshToken = (WebUtils.getCookie(request, "refreshToken")).getValue();
-                } catch (NullPointerException f) {
-                    throw new InvalidToken("No token supplied");
-                }
-
-                // verify the token
-                if (refreshToken == null) {
-                    throw new InvalidToken("Invalid access token and no refresh token");
-                }
-
-                DecodedJWT decodedRefresh = refreshTokenService.verifyRefreshToken(refreshToken);
-                refreshTokenService.deleteRefreshToken(refreshToken); 
-
-                subject = decodedRefresh.getSubject().split(";");
-                
-                // generate new tokens
-                String newRefreshToken = TokenManager.generateJWT(decodedRefresh.getSubject(), TokenType.REFRESH);
-                String newAccessToken = TokenManager.generateJWT(decodedRefresh.getSubject(), TokenType.ACCESS);
-                refreshTokenService.saveRefreshToken(new RefreshToken(newRefreshToken));
-
-                // set the new httponly cookie for the tokens
-                Cookie accessTokenCookie = new Cookie("accessToken", newAccessToken);
-                accessTokenCookie.setHttpOnly(true);
-                accessTokenCookie.setSecure(true);
-                accessTokenCookie.setMaxAge(SecurityConstants.ACCESS_EXPIRATION_TIME_MINUTES * 60);
-                response.addCookie(accessTokenCookie);
-
-                Cookie refreshTokenCookie = new Cookie("refreshToken", newRefreshToken);
-                refreshTokenCookie.setHttpOnly(true);
-                refreshTokenCookie.setSecure(true);
-                refreshTokenCookie.setMaxAge(SecurityConstants.REFRESH_EXPIRATION_TIME_MINUTES * 60);
-                response.addCookie(refreshTokenCookie);
-            }
-
+            String subject[] = TokenManager.verifyJWT(token, TokenType.ACCESS).getSubject().split(";");
             String userEmail = subject[0];
             UserType userType = UserType.valueOf(subject[1]);
 
             if (userEmail != null) {
                 // if they are requesting a user's specific info, make sure they are that user
-                
                 String requestUrl = request.getRequestURI().substring(request.getContextPath().length());
 
                 if (requestUrl.contains("@")) {

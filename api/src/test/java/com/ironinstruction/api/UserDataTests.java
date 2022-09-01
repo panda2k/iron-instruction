@@ -17,7 +17,6 @@ import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateSetRequest;
 import com.ironinstruction.api.requests.LoginRequest;
 import com.ironinstruction.api.requests.UpdateAthleteRequest;
-import com.ironinstruction.api.responses.JWTResponse;
 import com.ironinstruction.api.responses.VideoLinkResponse;
 import com.ironinstruction.api.user.Athlete;
 import com.ironinstruction.api.user.UserService;
@@ -43,7 +42,6 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -374,7 +372,7 @@ public class UserDataTests {
         UpdateAthleteRequest validRequest = new UpdateAthleteRequest(
             "67.5kg",
             (float) 71.2,
-            new Date(System.currentTimeMillis() - OffsetDateTime.now().getOffset().getTotalSeconds() * 1000),
+            new Date(System.currentTimeMillis()),
             150,
             100,
             175,
@@ -388,9 +386,6 @@ public class UserDataTests {
             .andExpect(status().isOk());
 
         Athlete ath = (Athlete) userService.findByEmail("data@gmail.com");
-        System.out.println("12345");
-        System.out.println(ath.getDob().getTime());
-        System.out.println(validRequest.getDob().getTime());
         assertTrue(ath.getWeightClass().equals(validRequest.getWeightClass()));
         assertTrue(ath.getWeight() == validRequest.getWeight());
         assertTrue(ath.getDob().getDay() == validRequest.getDob().getDay());
