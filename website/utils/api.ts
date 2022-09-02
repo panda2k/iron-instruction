@@ -16,7 +16,7 @@ class Api {
         }, async (error: AxiosError) => {
             const originalRequest: AxiosRequestConfig = error.config
             const errorMessage: ErrorResponse = (error.response?.data) as unknown as ErrorResponse
-            if (error.response?.status == 403 && errorMessage.message == "Invalid token") {
+            if (error.response?.status == 403 && errorMessage.message.toLowerCase().includes("expired")) {
                 await this.getNewTokens()
                 return this.client(originalRequest)
             } else if (originalRequest.url?.match("refreshtoken")) { // failed to refresh token
@@ -25,6 +25,10 @@ class Api {
                 return Promise.reject(error)
             }
         })
+    }
+
+    public async logout(): Promise<AxiosResponse> {
+        return this.client.post("/logout")
     }
 
     public async getNewTokens(): Promise<AxiosResponse> {

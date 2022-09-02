@@ -1,15 +1,20 @@
 import { NextPage } from "next";
 import Link from "next/link";
 import { useUserContext } from "../context/UserContext";
+import Dropdown from "./Dropdown";
 import Logo from "./Logo";
 
-const NavBar: NextPage = () => {
+type Props = {
+    loading: boolean
+}
+
+const NavBar: NextPage<Props> = (props: Props) => {
     const { user, setUser } = useUserContext()
 
     return (
         <div className="flex justify-between ml-8 mt-6 mr-8">
             <Logo />
-            {
+            {!props.loading && (
                 user == null ?
                     <div>
                         <Link href="/login">
@@ -21,8 +26,9 @@ const NavBar: NextPage = () => {
                     </div>
                     :
                     <div>
-                        Welcome back {user.name}
+                        <Dropdown logoutButton={true} heading={`${user.name}`} menuItems={[{ name: "Profile", href: "/profile" }, { name: "Programs", href: "/programs" }]} />
                     </div>
+            )
             }
         </div>
     )

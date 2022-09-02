@@ -53,7 +53,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge(SecurityConstants.ACCESS_EXPIRATION_TIME_MINUTES * 60);
+        // don't set acccess token maxage to let client differentiate between a deleted cookie from logout and an expired access
 
         // create JWT refresh token 
         RefreshToken refreshToken = new RefreshToken(TokenManager.generateJWT((String) authResult.getPrincipal(), TokenType.REFRESH));

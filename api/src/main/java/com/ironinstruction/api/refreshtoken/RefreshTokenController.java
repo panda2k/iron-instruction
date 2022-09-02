@@ -55,7 +55,7 @@ public class RefreshTokenController {
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge(SecurityConstants.ACCESS_EXPIRATION_TIME_MINUTES * 60);
+        // don't set acccess token maxage to let client differentiate between a deleted cookie from logout and an expired access
 
         response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);
