@@ -6,6 +6,7 @@ import com.ironinstruction.api.refreshtoken.RefreshTokenService;
 import com.ironinstruction.api.requests.LoginRequest;
 import com.ironinstruction.api.utils.TokenManager;
 import com.ironinstruction.api.utils.TokenType;
+import com.ironinstruction.api.security.SecurityConstants;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -51,13 +52,17 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true);
-        
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(SecurityConstants.ACCESS_EXPIRATION_TIME_MINUTES * 60);
+
         // create JWT refresh token 
         RefreshToken refreshToken = new RefreshToken(TokenManager.generateJWT((String) authResult.getPrincipal(), TokenType.REFRESH));
         refreshTokenService.saveRefreshToken(refreshToken);
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken.getToken());
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setPath("/api/v1/refreshtoken");
+        refreshTokenCookie.setMaxAge(SecurityConstants.REFRESH_EXPIRATION_TIME_MINUTES * 60);
 
         // send the final response
         response.addCookie(accessTokenCookie);

@@ -54,6 +54,7 @@ public class RefreshTokenController {
         Cookie accessTokenCookie = new Cookie("accessToken", TokenManager.generateJWT(token.getSubject(), TokenType.ACCESS));
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true);
+        accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge(SecurityConstants.ACCESS_EXPIRATION_TIME_MINUTES * 60);
 
         response.addCookie(accessTokenCookie);

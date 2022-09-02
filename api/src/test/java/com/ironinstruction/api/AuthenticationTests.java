@@ -94,7 +94,6 @@ public class AuthenticationTests {
             .andExpect(status().isBadRequest());
         
         assertDoesNotThrow(() -> userService.findByEmail(request.getEmail()));
-
     }
 
     @Test

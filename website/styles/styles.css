@@ -1,0 +1,60 @@
+.purple-bg {
+    background-color: #A020F0;
+}
+
+.purple-text {
+    color: #A020F0; 
+}
+
+input {
+    background-color: white;
+}
+
+.toggle {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+.toggle input {
+    width: 0;
+    height: 0;
+    position: absolute;
+    left: -9999px;
+}
+.toggle input + label {
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    box-sizing: border-box;
+    border: solid 1px black;
+    background-color: #fff;
+    line-height: 140%;
+    text-align: center;
+    flex: 0 0 50%;
+	display: flex;
+	justify-content: center;
+	align-items: center
+}
+.toggle input + label:first-of-type {
+    border-radius: 6px 0 0 6px;
+    border-right: none;
+}
+
+.toggle input + label:last-of-type {
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+}
+
+.toggle input:checked + label {
+    color: #fff;
+    background-color: #A020F0; 
+    border-color: #A020F0; 
+    z-index: 1;
+}
+
+.toggle input:focus + label {
+    outline: dotted 1px #ccc;
+	outline-offset: 0.45rem;
+}
+
