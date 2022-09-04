@@ -105,6 +105,10 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
                                 throw new AccessDenied("Coaches can't use patch requests");
                             }
                         }
+                    } 
+                } else if (requestUrl.contains("athlete")) {
+                    if (userType != UserType.ATHLETE) {
+                        throw new AccessDenied("User must be an athlete");
                     }
                 }
                 return new UsernamePasswordAuthenticationToken(userEmail, null);

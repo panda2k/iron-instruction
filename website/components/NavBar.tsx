@@ -26,7 +26,7 @@ const NavBar: NextPage<Props> = (props: Props) => {
                     </div>
                     :
                     <div>
-                        <Dropdown logoutButton={true} heading={`${user.name}`} menuItems={[{ name: "Profile", href: "/profile" }, { name: "Programs", href: "/programs" }]} />
+                        <Dropdown logoutButton={true} heading={`${user.name}`} menuItems={[{ name: "Dashboard", href: "/dashboard" }]} />
                     </div>
             )
             }

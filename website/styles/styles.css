@@ -10,6 +10,30 @@ input {
     background-color: white;
 }
 
+select {
+    background-color: white;
+}
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+select:disabled::-ms-expand {
+    display: none;
+}
+
+select:disabled {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
 .toggle {
     display: flex;
     flex-flow: row nowrap;

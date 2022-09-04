@@ -12,6 +12,14 @@ class Api {
             withCredentials: true
         })
         this.client.interceptors.response.use((response: AxiosResponse) => {
+            if (response.data.userType) {
+                response.data.userType = UserType[response.data.userType as keyof typeof UserType]
+            }
+
+            if (response.data.dob) {
+                response.data.dob = response.data.dob.split("T")[0]
+            }
+
             return response
         }, async (error: AxiosError) => {
             const originalRequest: AxiosRequestConfig = error.config
@@ -39,20 +47,27 @@ class Api {
         return (await this.client.get("/users/me")).data as unknown as User
     }
 
+    public async updateUser(email: string, name: string): Promise<User> {
+        return (await this.client.post("/users/me", {
+                email: email,
+                name: name
+            })).data as unknown as User
+    }
+
     public async createUser(name: string, email: string, password: string, userType: UserType): Promise<User> {
         return (await this.client.post("/users", {
             name: name,
             email: email,
             password: password,
-            userType: userType
+            userType: userType.toString().toUpperCase()
         }, { withCredentials: false })).data as unknown as User
     }
 
     /**
     * @param {string} dob - date of birth in yyyy-MM-dd format
     */
-    public async updateAthleteInfo(weightClass: string, weight: string, dob: string, squatMax: number, benchMax: number, deadliftMax: number, height: number): Promise<User> {
-        return (await this.client.post("/users/me", {
+    public async updateAthleteInfo(weightClass: string, weight: number, dob: string, squatMax: number, benchMax: number, deadliftMax: number, height: number): Promise<User> {
+        return (await this.client.post("/users/me/athlete", {
             weightClass: weightClass,
             weight: weight,
             dob: dob,

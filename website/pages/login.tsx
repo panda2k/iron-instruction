@@ -31,11 +31,15 @@ const Login: NextPage = () => {
             window.location.href = "/"
         } catch (error) {
             if (error instanceof AxiosError && error.response) {
-                const errorMessage: string = (error.response.data as unknown as ErrorResponse).message
-                if (errorMessage.includes("Incorrect password")) {
-                    setError("Incorrect password")
-                } else if (errorMessage.includes("No user found")) {
-                    setError(`No user found with the email ${input.email}`)
+                if (error.response.data) {
+                    const errorMessage: string = (error.response.data as unknown as ErrorResponse).message
+                    if (errorMessage.includes("Incorrect password")) {
+                        setError("Incorrect password")
+                    } else if (errorMessage.includes("No user found")) {
+                        setError(`No user found with the email ${input.email}`)
+                    } else {
+                        setError("Unexpected error. Please try again")
+                    }
                 } else {
                     setError("Unexpected error. Please try again")
                 }

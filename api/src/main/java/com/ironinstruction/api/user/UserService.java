@@ -1,6 +1,7 @@
 package com.ironinstruction.api.user;
 
 import com.ironinstruction.api.utils.PasswordManager;
+import com.ironinstruction.api.errors.ResourceNotFound;
 import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
@@ -25,8 +26,12 @@ public class UserService {
         this.passwordManager = new PasswordManager();
     }
 
-    public User findByEmail(String email) throws NoSuchElementException {
-        return userRepository.findByEmail(email).get();
+    public User findByEmail(String email) throws ResourceNotFound {
+        try {
+            return userRepository.findByEmail(email).get();
+        } catch (NoSuchElementException e) {
+            throw new ResourceNotFound(email);
+        }
     }
 
     public User createUser(String name, String email, String password, UserType userType) throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -45,7 +50,7 @@ public class UserService {
         return;
     }
 
-    public Athlete updateAthleteInfoByEmail(String email, String weightClass, float weight, Date dob, float squatMax, float benchMax, float deadliftMax, float height) throws NoSuchElementException {
+    public Athlete updateAthleteInfoByEmail(String email, String weightClass, float weight, Date dob, float squatMax, float benchMax, float deadliftMax, float height) throws ResourceNotFound {
         Athlete user = (Athlete) findByEmail(email); 
          
         user.setWeightClass(weightClass);
@@ -55,6 +60,14 @@ public class UserService {
         user.setBenchMax(benchMax);
         user.setDeadliftMax(deadliftMax);
         user.setHeight(height);
+
+        return userRepository.save(user);
+    }
+
+    public User updateUserInfoByEmail(String email, String newEmail, String name) throws ResourceNotFound{
+        User user = findByEmail(email);
+        user.setName(name);
+        user.setEmail(newEmail);
 
         return userRepository.save(user);
     }

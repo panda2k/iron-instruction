@@ -1,5 +1,6 @@
 package com.ironinstruction.api.security;
 
+import com.ironinstruction.api.errors.ResourceNotFound;
 import com.ironinstruction.api.user.User;
 import com.ironinstruction.api.user.UserService;
 import com.ironinstruction.api.utils.PasswordManager;
@@ -35,7 +36,7 @@ public class CustomAuthenticationManager implements AuthenticationManager {
             } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                 throw new RuntimeException(e);
             }
-        } catch (NoSuchElementException e) {
+        } catch (ResourceNotFound e) {
             throw new BadCredentialsException("No user found with email '" + authentication.getPrincipal() + "'");
         }
     }

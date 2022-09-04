@@ -17,8 +17,10 @@ import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateSetRequest;
 import com.ironinstruction.api.requests.LoginRequest;
 import com.ironinstruction.api.requests.UpdateAthleteRequest;
+import com.ironinstruction.api.requests.UpdateUserRequest;
 import com.ironinstruction.api.responses.VideoLinkResponse;
 import com.ironinstruction.api.user.Athlete;
+import com.ironinstruction.api.user.User;
 import com.ironinstruction.api.user.UserService;
 import com.ironinstruction.api.user.UserType;
 
@@ -38,7 +40,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -367,6 +368,39 @@ public class UserDataTests {
             .andExpect(jsonPath("$.message", containsString("not found")));
     }
 
+    @Test 
+    public void testUserUpdate() throws Exception {
+        userService.createUser("hi", "userupdate@gmail.com", "test", UserType.ATHLETE);
+        createdAccounts.add("userupdate@gmail.com");
+
+        MvcResult userLogin = mockMvc.perform(post("/api/v1/login")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new LoginRequest("data@gmail.com", "test"))))
+            .andReturn();
+        
+        Cookie login = new Cookie("accessToken", getCookieValue(userLogin.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
+        // test valid update
+        UpdateUserRequest validRequest = new UpdateUserRequest("newemail@gmail.com", "new name");
+        mockMvc.perform(post("/api/v1/users/me")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(validRequest))
+            .cookie(login))
+            .andExpect(status().isOk());
+         
+        assertDoesNotThrow(() -> {
+            User updatedCoach = userService.findByEmail("newemail@gmail.com");
+            assertTrue(updatedCoach.getName().equals("new name"));
+        });
+        this.createdAccounts.add("newemail@gmail.com");
+
+        // test invalid request 
+        mockMvc.perform(post("/api/v1/users/me")
+            .contentType("application/json")
+            .cookie(coachAccess))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message", containsString("Invalid body")));
+    }
+
     @Test
     public void testAthleteUpdate() throws Exception {
         // test valid body
@@ -380,7 +414,7 @@ public class UserDataTests {
             65
         );
         
-        mockMvc.perform(post("/api/v1/users/me")
+        mockMvc.perform(post("/api/v1/users/me/athlete")
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(validRequest))
             .cookie(athleteAccess))
@@ -399,7 +433,15 @@ public class UserDataTests {
         assertTrue(ath.getBenchMax() == validRequest.getBenchMax());
         assertTrue(ath.getDeadliftMax() == validRequest.getDeadliftMax());
         assertTrue(ath.getHeight() == validRequest.getHeight());
-       
+
+        // test updating coach like an athlete 
+        mockMvc.perform(post("/api/v1/users/me/athlete")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(validRequest))
+            .cookie(coachAccess))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("must be an athlete")));
+
         // test empty body
         mockMvc.perform(post("/api/v1/users/me")
             .contentType("application/json")

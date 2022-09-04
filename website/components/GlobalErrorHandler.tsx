@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Component, ReactNode } from "react";
 import { NeedLogin } from "../utils/api.errors";
 
@@ -26,7 +27,12 @@ class GlobalErrorHandler extends Component<Props, State> {
 
     render() {
         if (this.state.hasError) {
-            return <h1>Something unexpected happened</h1>
+            return (
+                <div>
+                    <h1>Something unexpected happened</h1>
+                    <Link href="/"><p className="underline cursor-pointer">Return home</p></Link>
+                </div>
+            )
         } else {
             return this.props.children
         }

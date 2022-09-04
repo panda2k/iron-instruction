@@ -44,4 +44,12 @@ public class TokenManager {
             throw new InvalidToken("Token expired");
         }
     }
+
+    public static DecodedJWT decodeJWT(String token) {
+        try {
+            return JWT.decode(token);
+        } catch (JWTDecodeException e) {
+            throw new InvalidToken("Invalid token");
+        }
+    }
 }

@@ -1,6 +1,6 @@
 export enum UserType {
-    COACH,
-    ATHLETE
+    COACH = "Coach",
+    ATHLETE = "Athlete"
 }
 
 export interface User {

@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import NavBar from '../components/NavBar'
@@ -27,7 +26,7 @@ const Home: NextPage = () => {
 
     return (
         <div className="flex flex-col h-full w-full">
-            <NavBar loading={loading}/>
+            <NavBar loading={loading} />
             <div className="flex flex-col h-full justify-center align-middle">
                 <h1 className='text-8xl mb-5 font-extrabold text-center'>Strength Coaching <br />Made Simple</h1>
                 <h2 className='text-2xl text-gray-500 text-center'>It's time to ditch the Excel sheets and create intuitive programs without the boilerplate.</h2>

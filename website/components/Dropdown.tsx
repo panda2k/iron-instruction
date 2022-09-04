@@ -22,6 +22,7 @@ const Dropdown: NextPage<Props> = (props: Props) => {
 
     const handleLogout = async (e: React.FormEvent) => {
         e.preventDefault()
+        window.location.href = "/"
         await Api.logout()
         setUser(null)
     }

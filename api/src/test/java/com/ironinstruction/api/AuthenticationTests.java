@@ -6,6 +6,7 @@ import com.ironinstruction.api.requests.NoteRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateUserRequest;
 import com.ironinstruction.api.requests.LoginRequest;
+import com.ironinstruction.api.requests.UpdateUserRequest;
 import com.ironinstruction.api.user.UserService;
 import com.ironinstruction.api.user.UserType;
 import com.ironinstruction.api.program.Program;
@@ -124,6 +125,42 @@ public class AuthenticationTests {
     }
 
     @Test 
+    public void testChangingEmail() throws Exception {
+        userService.createUser("new", "new@gmail.com", "test", UserType.COACH);
+        this.createdAccounts.add("new@gmail.com");
+
+        LoginRequest validLogin = new LoginRequest("new@gmail.com", "test");
+        
+        MvcResult validResult = mockMvc.perform(post("/api/v1/login")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(validLogin)))
+            .andReturn();
+
+        Cookie accessTokenCookie = new Cookie("accessToken", getCookieValue(validResult.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
+        
+        UpdateUserRequest validRequest = new UpdateUserRequest("newnew@gmail.com", "new name");
+
+        MvcResult updateResult = mockMvc.perform(post("/api/v1/users/me")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(validRequest))
+            .cookie(accessTokenCookie))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        Cookie newAccessToken = new Cookie("accessToken", getCookieValue(updateResult.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
+
+        this.createdAccounts.add("newnew@gmail.com");
+
+        mockMvc.perform(get("/api/v1/users/me")
+            .cookie(accessTokenCookie))
+            .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/users/me")
+            .cookie(newAccessToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test 
     public void testTokenPermissions() throws Exception {
         LoginRequest validLogin = new LoginRequest("hello@gmail.com", "test");
         
@@ -175,7 +212,7 @@ public class AuthenticationTests {
         mockMvc.perform(post("/api/v1/refreshtoken")
             .cookie(expiredAccessCookie))
             .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message", containsString("No token")));
+            .andExpect(jsonPath("$.message", containsString("No refresh token")));
 
         // valid refresh
         MvcResult newTokenResponse =  mockMvc.perform(post("/api/v1/refreshtoken")

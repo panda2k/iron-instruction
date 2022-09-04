@@ -3,7 +3,6 @@ package com.ironinstruction.api.refreshtoken;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.ironinstruction.api.errors.ErrorResponse;
 import com.ironinstruction.api.errors.InvalidToken;
 import com.ironinstruction.api.security.SecurityConstants;
@@ -37,21 +36,27 @@ public class RefreshTokenController {
     }
 
     @PostMapping()
-    public ResponseEntity<?> refreshToken(@CookieValue(name = "refreshToken", defaultValue = "") String refreshToken, HttpServletResponse response) {
+    public ResponseEntity<?> refreshToken(@CookieValue(name = "refreshToken", defaultValue = "") String refreshToken, @CookieValue(name="accessToken", defaultValue = "") String accessToken, HttpServletResponse response) {
+        // need access token in case of changed email since changing the email only returns a new access token
         if (refreshToken.isBlank()) {
-            throw new InvalidToken("No token provided");
+            throw new InvalidToken("No refresh token provided");
+        } else if (accessToken.isBlank()) {
+            throw new InvalidToken("No access token provided");
         }
-        DecodedJWT token = refreshTokenService.verifyRefreshToken(refreshToken);
+        
+        String latestEmail = TokenManager.decodeJWT(accessToken).getSubject();
+        // throws error if invalid token 
+        refreshTokenService.verifyRefreshToken(refreshToken);
         
         refreshTokenService.deleteRefreshToken(refreshToken); 
-        Cookie refreshTokenCookie = new Cookie("refreshToken", TokenManager.generateJWT(token.getSubject(), TokenType.REFRESH));
+        Cookie refreshTokenCookie = new Cookie("refreshToken", TokenManager.generateJWT(latestEmail, TokenType.REFRESH));
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setMaxAge(SecurityConstants.REFRESH_EXPIRATION_TIME_MINUTES * 60);
         refreshTokenCookie.setPath("/api/v1/refreshtoken");
         refreshTokenService.saveRefreshToken(new RefreshToken(refreshTokenCookie.getValue()));
 
-        Cookie accessTokenCookie = new Cookie("accessToken", TokenManager.generateJWT(token.getSubject(), TokenType.ACCESS));
+        Cookie accessTokenCookie = new Cookie("accessToken", TokenManager.generateJWT(latestEmail, TokenType.ACCESS));
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");

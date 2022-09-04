@@ -12,7 +12,7 @@ const SignUp: NextPage = () => {
         email: '',
         password: '',
         name: '',
-        accountType: 'ATHLETE'
+        accountType: 'COACH'
     })
 
     const { user, setUser } = useUserContext()
@@ -20,18 +20,7 @@ const SignUp: NextPage = () => {
     const [error, setError] = useState("")
 
     const inputHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // unironically i have no clue why everything needs to be inversed
-        // i've debugged it for an hour and can't get it to work normally
-        // send help plz
-        if (e.target.name == "accountType") {
-            const inverse = {
-                "COACH": "ATHLETE",
-                "ATHLETE": "COACH"
-            }
-            setInput({ ...input, accountType: inverse[e.target.value as keyof typeof inverse] })
-        } else {
-            setInput({ ...input, [e.target.name]: e.target.value })
-        }
+        setInput({ ...input, [e.target.name]: e.target.value })
     }
 
     const submitSignup = async (e: React.FormEvent) => {
@@ -45,9 +34,13 @@ const SignUp: NextPage = () => {
             window.location.href = "/"
         } catch (error) {
             if (error instanceof AxiosError && error.response) {
-                const errorMessage: string = (error.response.data as unknown as ErrorResponse).message
-                if (errorMessage.includes("already exists")) {
-                    setError(`Account with email ${input.email} already exists`)
+                if (error.response.data) {
+                    const errorMessage: string = (error.response.data as unknown as ErrorResponse).message
+                    if (errorMessage.includes("already exists")) {
+                        setError(`Account with email ${input.email} already exists`)
+                    } else {
+                        setError("Unexpected error. Please try again")
+                    }
                 } else {
                     setError("Unexpected error. Please try again")
                 }
