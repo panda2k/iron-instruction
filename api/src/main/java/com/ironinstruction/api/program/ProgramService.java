@@ -22,6 +22,15 @@ public class ProgramService {
         return programRepository.insert(program);
     }
 
+    public Program updateProgram(String programId, String name, String description) throws ResourceNotFound {
+        Program program = findById(programId);
+
+        program.setName(name);
+        program.setDescription(description);
+
+        return programRepository.save(program);
+    }
+
     public List<Program> findUserPrograms(String email) {
         return programRepository.findByEmail(email); 
     }

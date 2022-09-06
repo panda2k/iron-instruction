@@ -40,7 +40,10 @@ public class ProgramController {
     }
 
     @PostMapping("")
-    public Program createProgram(@RequestBody CreateProgramRequest request) {
+    public Program createProgram(@RequestBody CreateProgramRequest request) throws InvalidRequest {
+        if (request.getName().isBlank()) {
+            throw new InvalidRequest("name field must not be empty");
+        }
         return programService.createProgram(
             (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal(), // JWT token's associated email
             request.getName(),
@@ -57,6 +60,11 @@ public class ProgramController {
     @GetMapping("/{programId}") 
     public Program getProgram(@PathVariable String programId) throws ResourceNotFound {
         return programService.findById(programId);
+    }
+
+    @PostMapping("/{programId}")
+    public Program updateProgram(@PathVariable String programId, @RequestBody CreateProgramRequest request) throws ResourceNotFound {
+        return programService.updateProgram(programId, request.getName(), request.getDescription()); 
     }
 
     @PostMapping("/{programId}/assign")

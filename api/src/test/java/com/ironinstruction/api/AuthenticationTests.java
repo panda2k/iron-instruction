@@ -324,6 +324,34 @@ public class AuthenticationTests {
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message", containsString("Only coaches")));
 
+        // update program as coach
+        mockMvc.perform(post(programUrlPath)
+            .cookie(validCoachAccess)
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(createProgramRequest)))
+            .andExpect(status().isOk());
+
+        // update program as bad coach
+        mockMvc.perform(post(programUrlPath)
+            .cookie(badCoachAccess)
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(createProgramRequest)))
+            .andExpect(status().isForbidden());
+
+        // update program as good athlete 
+        mockMvc.perform(post(programUrlPath)
+            .cookie(validAthleteAccess)
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(createProgramRequest)))
+            .andExpect(status().isForbidden());
+
+        // update program as good athlete 
+        mockMvc.perform(post(programUrlPath)
+            .cookie(badAthleteAccess)
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(createProgramRequest)))
+            .andExpect(status().isForbidden());
+
         // get program as coach
         assertDoesNotThrow(() -> objectMapper.readValue(mockMvc.perform(get(programUrlPath)
             .cookie(validCoachAccess))

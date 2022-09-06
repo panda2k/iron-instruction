@@ -135,6 +135,18 @@ public class UserDataTests {
             .getResponse().getContentAsString(), Program.class);
         createdPrograms.add(secondProgram.getId());
 
+        // update program info
+        CreateProgramRequest updateProgramRequest = new CreateProgramRequest("update", "updated");
+        mockMvc.perform(post(programUrlPath)
+            .cookie(coachAccess)
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(updateProgramRequest)))
+            .andExpect(status().isOk());
+
+        Program updatedProgram = programService.findById(createdProgram.getId());
+        assertTrue(updatedProgram.getName().equals(updateProgramRequest.getName()));
+        assertTrue(updatedProgram.getDescription().equals(updateProgramRequest.getDescription()));
+
         // assign program
         mockMvc.perform(post(programUrlPath + "/assign")
             .cookie(coachAccess)
