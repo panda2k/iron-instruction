@@ -13,27 +13,23 @@ public class Set {
     private PercentageOptions percentageReference;
     private float weight;
     private float rpe;
-    private String coachNotes;
-    private String athleteNotes;
     private String videoRef;
     private boolean videoRequested;
 
     public Set() { }
 
-    public Set(int reps, float percentage, PercentageOptions percentageReference, String coachNotes, boolean videoRequested) {
+    public Set(int reps, float percentage, PercentageOptions percentageReference, boolean videoRequested) {
         this.id = new ObjectId().toString();
         this.reps = reps;
         this.percentage = percentage;
         this.percentageReference = percentageReference;
-        this.coachNotes = coachNotes;
         this.videoRequested = videoRequested;
     }
 
-    public Set(float rpe, float weight, String coachNotes, boolean videoRequested) {
+    public Set(float rpe, float weight, boolean videoRequested) {
         this.id = new ObjectId().toString();
         this.rpe = rpe;
         this.weight = weight;
-        this.coachNotes = coachNotes;
         this.videoRequested = videoRequested;
     }
 
@@ -87,22 +83,6 @@ public class Set {
 
     public void setRpe(float rpe) {
         this.rpe = rpe;
-    }
-
-    public String getCoachNotes() {
-        return coachNotes;
-    }
-
-    public void setCoachNotes(String coachNotes) {
-        this.coachNotes = coachNotes;
-    }
-
-    public String getAthleteNotes() {
-        return athleteNotes;
-    }
-
-    public void setAthleteNotes(String athleteNotes) {
-        this.athleteNotes = athleteNotes;
     }
 
     public String getVideoRef() {

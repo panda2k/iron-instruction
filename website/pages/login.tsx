@@ -13,7 +13,7 @@ const Login: NextPage = () => {
         password: ''
     })
 
-    const { user, setUser } = useUserContext()
+    const { setUser } = useUserContext()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
@@ -28,7 +28,7 @@ const Login: NextPage = () => {
             await Api.login(input.email, input.password)
             const userInfo: User = await Api.getUserInfo()
             setUser(userInfo)
-            window.location.href = "/"
+            window.location.href = "/dashboard"
         } catch (error) {
             if (error instanceof AxiosError && error.response) {
                 if (error.response.data) {

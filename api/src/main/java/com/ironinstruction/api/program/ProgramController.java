@@ -83,7 +83,12 @@ public class ProgramController {
     public Program createWeek(@PathVariable String programId, @RequestBody NoteRequest request) throws ResourceNotFound {
         return programService.addWeek(programId, request.getNote());
     }
-   
+  
+    @PostMapping("/{programId}/weeks/{weekId}/notes")
+    public Program updateWeekCoachNotes(@PathVariable String programId, @PathVariable String weekId, @RequestBody NoteRequest request) throws ResourceNotFound {
+        return programService.updateWeekCoachNote(programId, weekId, request.getNote());
+    }
+
     @PatchMapping("/{programId}/weeks/{weekId}/notes")
     public Program updateWeekAthleteNote(@PathVariable String programId, @PathVariable String weekId, @RequestBody NoteRequest request) throws ResourceNotFound {
         return programService.updateWeekAthleteNote(programId, weekId, request.getNote());
@@ -104,9 +109,14 @@ public class ProgramController {
         return programService.updateDayAthleteNote(programId, weekId, dayId, request.getNote());
     }
 
+    @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/notes")
+    public Program updateDayCoachNote(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @RequestBody NoteRequest request) throws ResourceNotFound {
+        return programService.updateDayCoachNote(programId, weekId, dayId, request.getNote());
+    }
+
     @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises")
     public Program createExercise(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @RequestBody CreateExerciseRequest request) throws ResourceNotFound {
-        return programService.addExercise(programId, weekId, dayId, request.getName(), request.getCoachNotes(), request.getVideoRef());
+        return programService.addExercise(programId, weekId, dayId, request.getName(), request.getVideoRef());
     }
 
     @GetMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/video") 
@@ -131,11 +141,6 @@ public class ProgramController {
         return new VideoLinkResponse(videoLink);
     }
 
-    @PatchMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/notes")
-    public Program updateExerciseAthleteNote(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @RequestBody NoteRequest request) throws ResourceNotFound {
-        return programService.updateExerciseAthleteNote(programId, weekId, dayId, exerciseId, request.getNote());
-    }
-
     @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/sets")
     public Program createSet(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @RequestBody CreateSetRequest request) throws ResourceNotFound {
         // rpe == -1 when set is designed with reps instead of rpe
@@ -148,7 +153,6 @@ public class ProgramController {
                 request.getReps(),
                 request.getPercentage(),
                 request.getPercentageReference(),
-                request.getCoachNotes(),
                 request.getVideoRequested()
             );
         } else {
@@ -159,7 +163,6 @@ public class ProgramController {
                 exerciseId,
                 request.getRpe(),
                 request.getWeight(),
-                request.getCoachNotes(),
                 request.getVideoRequested()
             );
         }
@@ -167,7 +170,7 @@ public class ProgramController {
 
     @PatchMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/sets/{setId}")
     public Program updateSet(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @PathVariable String setId, @RequestBody FinishSetRequest request) throws ResourceNotFound {
-        return programService.updateSet(programId, weekId, dayId, exerciseId, setId, request.getRepsDone(), request.getAthleteNotes());
+        return programService.updateSet(programId, weekId, dayId, exerciseId, setId, request.getRepsDone());
     }
 
     @GetMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/sets/{setId}/video") 

@@ -8,18 +8,16 @@ public class CreateSetRequest {
     private float percentage;
     private float weight;
     private PercentageOptions percentageReference;
-    private String coachNotes;
     private boolean videoRequested;
 
     public CreateSetRequest() { }
 
-    public CreateSetRequest(int reps, float rpe, float percentage, float weight, PercentageOptions percentageReference, String coachNotes, boolean videoRequested) {
+    public CreateSetRequest(int reps, float rpe, float percentage, float weight, PercentageOptions percentageReference, boolean videoRequested) {
         this.reps = reps;
         this.rpe = rpe;
         this.percentage = percentage;
         this.weight = weight;
         this.percentageReference = percentageReference;
-        this.coachNotes = coachNotes;
         this.videoRequested = videoRequested;
     }
 
@@ -61,14 +59,6 @@ public class CreateSetRequest {
 
     public PercentageOptions getPercentageReference() {
         return this.percentageReference;
-    }
-
-    public void setCoachNotes(String coachNotes) {
-        this.coachNotes = coachNotes;
-    }
-
-    public String getCoachNotes() {
-        return this.coachNotes;
     }
 
     public void setVideoRequested(boolean videoRequested) {

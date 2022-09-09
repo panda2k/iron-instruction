@@ -11,15 +11,12 @@ public class Exercise {
     @Id
     private String id;
     private String name;
-    private String coachNotes;
-    private String athleteNotes;
     private String videoRef;
     private ArrayList<Set> sets;
 
-    public Exercise(String name, String coachNotes, String videoRef) {
+    public Exercise(String name, String videoRef) {
         this.id = new ObjectId().toString();
         this.name = name;
-        this.coachNotes = coachNotes;
         this.videoRef = videoRef;
         this.sets = new ArrayList<Set>();
     }
@@ -44,22 +41,6 @@ public class Exercise {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getCoachNotes() {
-        return coachNotes;
-    }
-
-    public void setCoachNotes(String coachNotes) {
-        this.coachNotes = coachNotes;
-    }
-
-    public String getAthleteNotes() {
-        return athleteNotes;
-    }
-
-    public void setAthleteNotes(String athleteNotes) {
-        this.athleteNotes = athleteNotes;
     }
 
     public String getVideoRef() {

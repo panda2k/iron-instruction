@@ -64,35 +64,34 @@ public class ProgramService {
         return programRepository.save(program);
     }
 
-    public Program addExercise(String programId, String weekId, String dayId, String name, String coachNotes, String videoRef) throws ResourceNotFound {
+    public Program addExercise(String programId, String weekId, String dayId, String name, String videoRef) throws ResourceNotFound {
         Program program = this.findById(programId);
-        Exercise exercise = new Exercise(name, coachNotes, videoRef);
+        Exercise exercise = new Exercise(name, videoRef);
         program.findWeekById(weekId).findDayById(dayId).addExercise(exercise);
 
         return programRepository.save(program);
     }
 
-    public Program addSet(String programId, String weekId, String dayId, String exerciseId, int reps, float percentage, PercentageOptions percentageReference, String coachNotes, boolean videoRequested) throws ResourceNotFound {
+    public Program addSet(String programId, String weekId, String dayId, String exerciseId, int reps, float percentage, PercentageOptions percentageReference, boolean videoRequested) throws ResourceNotFound {
         Program program = this.findById(programId);
-        Set set = new  Set(reps, percentage, percentageReference, coachNotes, videoRequested);
+        Set set = new  Set(reps, percentage, percentageReference, videoRequested);
         program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).addSet(set);
         
         return programRepository.save(program);
     }
 
-    public Program addSet(String programId, String weekId, String dayId, String exerciseId, float rpe, float weight, String coachNotes, boolean videoRequested) throws ResourceNotFound {
+    public Program addSet(String programId, String weekId, String dayId, String exerciseId, float rpe, float weight, boolean videoRequested) throws ResourceNotFound {
         Program program = this.findById(programId);
-        Set set = new  Set(rpe, weight, coachNotes, videoRequested);
+        Set set = new  Set(rpe, weight, videoRequested);
         program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).addSet(set);
         
         return programRepository.save(program);
     }
 
-    public Program updateSet(String programId, String weekId, String dayId, String exerciseId, String setId, int completedReps, String athleteNotes) throws ResourceNotFound {
+    public Program updateSet(String programId, String weekId, String dayId, String exerciseId, String setId, int completedReps) throws ResourceNotFound {
         Program program = this.findById(programId);
         Set set = program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).findSetById(setId);
         set.setCompletedReps(completedReps);
-        set.setAthleteNotes(athleteNotes);
 
         return programRepository.save(program);
     }
@@ -117,6 +116,13 @@ public class ProgramService {
         return programRepository.save(program);
     }
 
+    public Program updateWeekCoachNote(String programId, String weekId, String coachNote) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        program.findWeekById(weekId).setCoachNotes(coachNote);
+
+        return programRepository.save(program);
+    }
+
     public Program updateDayAthleteNote(String programId, String weekId, String dayId, String athleteNote) throws ResourceNotFound {
         Program program = this.findById(programId);
         program.findWeekById(weekId).findDayById(dayId).setAthleteNotes(athleteNote);
@@ -124,9 +130,9 @@ public class ProgramService {
         return programRepository.save(program);
     }
 
-    public Program updateExerciseAthleteNote(String programId, String weekId, String dayId, String exerciseId, String athleteNote) throws ResourceNotFound {
+    public Program updateDayCoachNote(String programId, String weekId, String dayId, String note) throws ResourceNotFound{
         Program program = this.findById(programId);
-        program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).setAthleteNotes(athleteNote);
+        program.findWeekById(weekId).findDayById(dayId).setCoachNotes(note);
 
         return programRepository.save(program);
     }

@@ -27,6 +27,8 @@ class Api {
             if (error.response?.status == 403 && errorMessage.message.toLowerCase().includes("expired")) {
                 await this.getNewTokens()
                 return this.client(originalRequest)
+            } else if (errorMessage.message.includes("Invalid token")) {
+                throw new NeedLogin("Need new login")
             } else if (originalRequest.url?.match("refreshtoken")) { // failed to refresh token
                 throw new NeedLogin("Need new login")
             } else {
@@ -49,9 +51,9 @@ class Api {
 
     public async updateUser(email: string, name: string): Promise<User> {
         return (await this.client.post("/users/me", {
-                email: email,
-                name: name
-            })).data as unknown as User
+            email: email,
+            name: name
+        })).data as unknown as User
     }
 
     public async createUser(name: string, email: string, password: string, userType: UserType): Promise<User> {
@@ -87,6 +89,61 @@ class Api {
 
     public async getUserPrograms(): Promise<Program[]> {
         return (await this.client.get(`/programs/user/me`)).data as unknown as Program[]
+    }
+
+    public async getProgram(programId: string): Promise<Program> {
+        return (await this.client.get(`/programs/${programId}`)).data as unknown as Program
+    }
+
+    public async createWeek(programId: string, notes: string): Promise<Program> {
+        return (await this.client.post(`/programs/${programId}/weeks`, {
+            note: notes
+        })).data as unknown as Program
+    }
+
+    public async updateWeekCoachNote(programId: string, weekId: string, notes: string): Promise<Program> {
+        return (await this.client.post(`programs/${programId}/weeks/${weekId}/notes`, {
+            note: notes
+        })).data as unknown as Program
+    }
+
+    public async updateWeekAthleteNote(programId: string, weekId: string, notes: string): Promise<Program> {
+        return (await this.client.patch(`programs/${programId}/weeks/${weekId}/notes`, {
+            note: notes
+        })).data as unknown as Program
+    }
+
+    public async createDay(programId: string, weekId: string, coachNotes: string): Promise<Program> {
+        return (await this.client.post(`programs/${programId}/weeks/${weekId}/days`, {
+            note: coachNotes
+        }
+        )).data as unknown as Program
+    }
+
+    public async updateDayCoachNote(programId: string, weekId: string, dayId: string, notes: string): Promise<Program> {
+        return (await this.client.post(`programs/${programId}/weeks/${weekId}/days/${dayId}/notes`, {
+            note: notes
+        })).data as unknown as Program
+    }
+
+    public async updateDayAthleteNote(programId: string, weekId: string, dayId: string, notes: string): Promise<Program> {
+        return (await this.client.patch(`programs/${programId}/weeks/${weekId}/days/${dayId}/notes`, {
+            note: notes
+        })).data as unknown as Program
+    }
+
+    public async createProgram(name: string, description: string): Promise<Program> {
+        return (await this.client.post(`/programs`, {
+            name: name,
+            description: description
+        })).data as unknown as Program
+    }
+
+    public async updateProgram(programId: string, name: string, description: string): Promise<Program> {
+        return (await this.client.post(`/programs/${programId}`, {
+            name: name,
+            description: description
+        })).data as unknown as Program
     }
 }
 
