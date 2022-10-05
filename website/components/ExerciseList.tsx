@@ -1,12 +1,13 @@
 import { NextPage } from "next";
 import { useState } from "react";
-import { Day, Exercise, Program, UserType } from "../utils/api.types";
+import { Athlete, Day, Exercise, PercentageOptions, Program, UserType } from "../utils/api.types";
 import Accordion from "./Accordion";
 import CreateExercise from "./CreateExercise";
 import Api from '../utils/api'
 import Modal from "./Modal";
 import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg'
 import { NeedLogin } from "../utils/api.errors";
+import { useUserContext } from "../context/UserContext";
 
 type Props = {
     userType: UserType,
@@ -36,6 +37,7 @@ const ExerciseList: NextPage<Props> = (props: Props) => {
     const [exerciseRepEditing, setExerciseRepEditing] = useState<boolean>(false)
     const [exerciseRepEditingData, setExerciseRepEditingData] = useState<{ exerciseId: string, setId: string, totalReps: number, repsDone: number }>(defaultExerciseRepEditingData)
     const [videoUploadError, setVideoUploadError] = useState<string>("")
+    const { user } = useUserContext()
 
     const ffmpeg = createFFmpeg({
         corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
@@ -200,6 +202,20 @@ const ExerciseList: NextPage<Props> = (props: Props) => {
         )
     }
 
+    const calculateWeight = (percentageRef: PercentageOptions, percentage: number): number => {
+        const athlete = user as Athlete
+        percentage = percentage / 100
+        if (percentageRef.valueOf() == PercentageOptions.Bench.valueOf()) {
+            return 2.5 * Math.ceil((percentage * athlete.benchMax) / 2.5)
+        } else if (percentageRef.valueOf() == PercentageOptions.Squat.valueOf()) {
+            return 2.5 * Math.ceil((percentage * athlete.squatMax) / 2.5)
+        } else if (percentageRef.valueOf() == PercentageOptions.Deadlift.valueOf()) {
+            return 2.5 * Math.ceil((percentage * athlete.deadliftMax) / 2.5)
+        } else {
+            throw new Error("Unexpected percentage reference")
+        }
+    }
+
     const generateExerciseContent = (exercises: Exercise[]): { conditionalClick?: Function, headerExtras?: React.ReactElement, heading: string, body: React.ReactElement }[] => {
         return exercises.map(exercise => {
             return {
@@ -211,7 +227,19 @@ const ExerciseList: NextPage<Props> = (props: Props) => {
                                 return (
                                     <div className="flex flex-col" key={set.id}>
                                         <div className="flex flex-row justify-between">
-                                            <h1>{set.reps} reps {set.rpe == -1 ? `at ${set.percentage}%` : `at ${set.weight}kg with RPE ${set.rpe}`}</h1>
+                                            <h1>
+                                                {set.reps} reps
+                                                {set.rpe == -1 ?
+                                                    ` at ${set.percentage}% of ${set.percentageReference.toLowerCase()} max` +
+                                                    (props.userType == UserType.ATHLETE ?
+                                                        ` (${calculateWeight(set.percentageReference, set.percentage)} kg)`
+                                                        :
+                                                        ""
+                                                    )
+                                                    :
+                                                    ` at ${set.weight}kg with RPE ${set.rpe}`
+                                                }
+                                            </h1>
                                             {
                                                 props.userType == UserType.ATHLETE &&
                                                 <div className="flex flex-row">

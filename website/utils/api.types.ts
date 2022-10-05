@@ -58,9 +58,9 @@ export interface Exercise {
 }
 
 export enum PercentageOptions {
-    Squat,
-    Bench,
-    Deadlift
+    Squat = "Squat",
+    Bench = "Bench",
+    Deadlift = "Deadlift"
 }
 
 export interface Set {

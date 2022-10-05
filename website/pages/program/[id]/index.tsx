@@ -1,5 +1,4 @@
 import { NextPage } from "next";
-import { ApiError } from "next/dist/server/api-utils";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
