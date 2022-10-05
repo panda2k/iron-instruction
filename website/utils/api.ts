@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { ApiError, NeedLogin } from "./api.errors";
-import { ErrorResponse, Exercise, PercentageOptions, Program, User, UserType } from "./api.types";
+import { ErrorResponse, Exercise, PercentageOptions, Program, User, UserType, VideoLinkResponse } from "./api.types";
 
 class Api {
     private client: AxiosInstance
@@ -182,6 +182,29 @@ class Api {
         return (await this.client.patch(`programs/${programId}/weeks/${weekId}/days/${dayId}/exercises/${exerciseId}/sets/${setId}`, {
             repsDone: repsCompleted
         })).data as unknown as Program
+    }
+
+    public async getVideoUploadLink(programId: string, weekId: string, dayId: string, exerciseId: string, setId: string): Promise<string> {
+        return ((await this.client.get(
+            `programs/${programId}/weeks/${weekId}/days/${dayId}/exercises/${exerciseId}/sets/${setId}/video/upload`
+        )).data as unknown as VideoLinkResponse).url
+    }
+
+    public async uploadVideo(url: string, video: Blob, progressHandler?: (progressEvent: ProgressEvent) => void): Promise<AxiosResponse> {
+        return axios.putForm(
+            url,
+            video,
+            {
+                headers: { "content-type": "video/mp4" },
+                onDownloadProgress: progressHandler
+            }
+        )
+    }
+
+    public async getVideoViewLink(programId: string, weekId: string, dayId: string, exerciseId: string, setId: string): Promise<string> {
+        return ((await this.client.get(
+            `programs/${programId}/weeks/${weekId}/days/${dayId}/exercises/${exerciseId}/sets/${setId}/video`
+        )).data as unknown as VideoLinkResponse).url
     }
 
     public async createProgram(name: string, description: string): Promise<Program> {

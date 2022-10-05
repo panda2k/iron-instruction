@@ -165,7 +165,7 @@ const DayList: NextPage<Props> = (props: Props) => {
 
     return (
         <div className="px-12 w-full">
-            <div className="flex flex-row justify-between items-end border-b border-b-black pb-0.5">
+            <div className={"flex flex-row items-end border-b border-b-black pb-0.5" + (props.userType == UserType.COACH ? " justify-between" : " justify-center")}>
                 {props.userType == UserType.COACH &&
                     <button onClick={() => setEditingDays(!editingDays)} className="hover:cursor-pointer">
                         <h3 className="h-fit">{editingDays ? "Done" : "Edit"}</h3>
