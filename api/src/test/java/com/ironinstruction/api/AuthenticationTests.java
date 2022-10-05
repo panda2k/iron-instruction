@@ -2,6 +2,7 @@ package com.ironinstruction.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ironinstruction.api.requests.AssignProgramRequest;
+import com.ironinstruction.api.requests.CreateExerciseRequest;
 import com.ironinstruction.api.requests.NoteRequest;
 import com.ironinstruction.api.requests.CreateProgramRequest;
 import com.ironinstruction.api.requests.CreateUserRequest;
@@ -9,6 +10,8 @@ import com.ironinstruction.api.requests.LoginRequest;
 import com.ironinstruction.api.requests.UpdateUserRequest;
 import com.ironinstruction.api.user.UserService;
 import com.ironinstruction.api.user.UserType;
+import com.ironinstruction.api.program.Day;
+import com.ironinstruction.api.program.Exercise;
 import com.ironinstruction.api.program.Program;
 import com.ironinstruction.api.program.ProgramService;
 import com.ironinstruction.api.utils.TokenManager;
@@ -418,6 +421,38 @@ public class AuthenticationTests {
             .contentType("application/json")
             .content(objectMapper.writeValueAsString(new NoteRequest("hi"))))
             .andExpect(status().isOk());
+
+        // test update and delete permissions
+        // prep test
+        String weekId = updatedProgram.getWeeks().get(0).getId();
+        mockMvc.perform(post(programUrlPath + "/weeks/" + weekId + "/days")
+            .cookie(validCoachAccess)
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("day 1"))))
+            .andExpect(status().isOk());
+
+        Day day = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0);
+        CreateExerciseRequest createExerciseRequest = new CreateExerciseRequest("Bench", "");
+        mockMvc.perform(post(programUrlPath + "/weeks/" + weekId + "/days/" + day.getId() + "/exercises")
+            .cookie(validCoachAccess)
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(createExerciseRequest)))
+            .andExpect(status().isOk());
+
+        Exercise exercise = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0);
+
+        // put exercise
+        mockMvc.perform(put(programUrlPath + "/weeks/" + weekId + "/days/" + day.getId() + "/exercises/" + exercise.getId())
+            .contentType("application/json")
+            .cookie(validAthleteAccess))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("put")));
+
+        // delete exercise
+        mockMvc.perform(delete(programUrlPath + "/weeks/" + weekId + "/days/" + day.getId() + "/exercises/" + exercise.getId())
+            .cookie(validAthleteAccess))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.message", containsString("delete")));
     }
 
     @AfterAll

@@ -2,6 +2,7 @@ package com.ironinstruction.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ironinstruction.api.errors.ResourceNotFound;
 import com.ironinstruction.api.program.Day;
 import com.ironinstruction.api.program.Exercise;
 import com.ironinstruction.api.program.PercentageOptions;
@@ -37,6 +38,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -106,6 +108,61 @@ public class UserDataTests {
             .andReturn();
 
         this.coachAccess= new Cookie("accessToken", getCookieValue(validCoachResult.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
+    }
+
+    @Test void testProgramDeleteData() throws Exception {
+        CreateProgramRequest createProgramRequest = new CreateProgramRequest("strong", "get strong");
+        Program createdProgram = objectMapper.readValue(mockMvc.perform(post("/api/v1/programs")
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(createProgramRequest))
+            .cookie(coachAccess))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse().getContentAsString(), Program.class);
+
+        this.createdPrograms.add(createdProgram.getId());
+
+        String programUrlPath = "/api/v1/programs/" + createdProgram.getId();
+
+        mockMvc.perform(post(programUrlPath + "/weeks")
+            .cookie(coachAccess)
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("week 1"))))
+            .andExpect(status().isOk());
+        Week week = programService.findById(createdProgram.getId()).getWeeks().get(0);
+
+        mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days")
+            .cookie(coachAccess)
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(new NoteRequest("day 1"))))
+            .andExpect(status().isOk());
+
+        Day day = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0);
+        
+        // test delete day
+        mockMvc.perform(delete(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId())
+            .cookie(coachAccess))
+            .andExpect(status().isOk());
+
+        assertThrows(
+            ResourceNotFound.class, () -> {
+            programService
+                .findById(createdProgram.getId())
+                .getWeeks().get(0)
+                .findDayById(day.getId());
+        });
+
+        // test delete week
+        mockMvc.perform(delete(programUrlPath + "/weeks/" + week.getId())
+            .cookie(coachAccess))
+            .andExpect(status().isOk());
+
+        assertThrows(
+            ResourceNotFound.class, () -> {
+            programService
+                .findById(createdProgram.getId())
+                .findWeekById(week.getId());
+        });
     }
 
     @Test void testProgramData() throws Exception {
@@ -192,7 +249,6 @@ public class UserDataTests {
         Week week = programService.findById(createdProgram.getId()).getWeeks().get(0);
         assertTrue(week.getCoachNotes().equals("week 1"));
 
-
         // add day to week
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days")
             .cookie(coachAccess)
@@ -202,7 +258,7 @@ public class UserDataTests {
 
         Day day = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0);
         assertTrue(day.getCoachNotes().equals("day 1"));
-        
+
         // add exercise to day
         CreateExerciseRequest createExerciseRequest = new CreateExerciseRequest("Bench", "");
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises")
@@ -213,8 +269,17 @@ public class UserDataTests {
         Exercise exercise = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0);
         assertTrue(exercise.getName().equals("Bench"));
 
+        // add invalid exercise
+        createExerciseRequest.setName("    ");
+        mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises")
+            .cookie(coachAccess)
+            .contentType("application/json")
+            .content(objectMapper.writeValueAsString(createExerciseRequest)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message", containsString("must not be blank")));
+
         // add set to exercise (rpe)
-        CreateSetRequest createSetRequestRpe = new CreateSetRequest(0, 8, 12, 100, PercentageOptions.Bench, true);
+        CreateSetRequest createSetRequestRpe = new CreateSetRequest(9, 8, 12, 100, PercentageOptions.Bench, true);
         mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId() + "/sets")
             .cookie(coachAccess)
             .contentType("application/json")
@@ -223,7 +288,7 @@ public class UserDataTests {
 
         Set set = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0).getSets().get(0);
         assertTrue(set.getRpe() == 8);
-        assertTrue(set.getReps() == 0);
+        assertTrue(set.getReps() == 9);
 
         // add set to exercise (reps)
         CreateSetRequest createSetRequestReps = new CreateSetRequest(10, -1, 12, 100, PercentageOptions.Bench, true);
@@ -298,19 +363,38 @@ public class UserDataTests {
         exercise = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0);
         assertTrue(exercise.getVideoRef().equals(exercise.getId() + ".mp4"));
 
-        // update day 
-        day = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0);
-        String dayId = day.getId();
-        day.findExerciseById(exercise.getId()).getSets().remove(0);
-        mockMvc.perform(post(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/update")
-            .cookie(coachAccess)
+        // update exercise with blank name 
+        exercise.setName("   ");
+        mockMvc.perform(put(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId())
             .contentType("application/json")
-            .content(objectMapper.writeValueAsString(day)))
+            .cookie(coachAccess)
+            .content(objectMapper.writeValueAsString(exercise)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message", containsString("must not be blank")));
+
+        // update exercise
+        exercise.setName("updating name test");
+        final String deletedSetId = exercise.getSets().remove(0).getId();
+        String content = objectMapper.writeValueAsString(exercise).replaceAll(exercise.getSets().get(0).getId(), "");
+        mockMvc.perform(put(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId())
+            .contentType("application/json")
+            .cookie(coachAccess)
+            .content(content))
+            .andExpect(status().isOk());  
+         
+        exercise = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).getExercises().get(0);
+        final String exerciseId = exercise.getId();
+
+        assertTrue(exercise.getName().equals("updating name test"));
+        assertThrows(ResourceNotFound.class, () -> programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).findExerciseById(exerciseId).findSetById(deletedSetId));
+        assertTrue(!exercise.getSets().get(0).getId().isEmpty());
+
+        // delete exercise
+        mockMvc.perform(delete(programUrlPath + "/weeks/" + week.getId() + "/days/" + day.getId() + "/exercises/" + exercise.getId())
+            .cookie(coachAccess))
             .andExpect(status().isOk());
 
-        day = programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0);
-        assertTrue(day.getId().equals(dayId));
-        assertTrue(day.findExerciseById(exercise.getId()).getSets().size() == 1);
+        assertThrows(ResourceNotFound.class, () -> programService.findById(createdProgram.getId()).getWeeks().get(0).getDays().get(0).findExerciseById(exerciseId));
 
         // update week coach note 
         NoteRequest updateWeekNote = new NoteRequest("updated week 1");
@@ -394,6 +478,7 @@ public class UserDataTests {
             .andReturn();
         
         Cookie login = new Cookie("accessToken", getCookieValue(userLogin.getResponse().getHeaders("set-cookie").get(0), "accessToken"));
+
         // test valid update
         UpdateUserRequest validRequest = new UpdateUserRequest("newemail@gmail.com", "new name");
         mockMvc.perform(post("/api/v1/users/me")

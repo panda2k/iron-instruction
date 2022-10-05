@@ -41,7 +41,7 @@ const Dropdown: NextPage<Props> = (props: Props) => {
                 <div className="py-1" role="none">
                     {props.menuItems.map(item => {
                         return (
-                            <a href={item.href} className="text-black block px-4 py-2 text-sm" role="menuitem" tabIndex={-1} >{item.name}</a>
+                            <a key={`${item.href}-${item.name}`} href={item.href} className="text-black block px-4 py-2 text-sm" role="menuitem" tabIndex={-1} >{item.name}</a>
                         )
                     })}
                 </div>

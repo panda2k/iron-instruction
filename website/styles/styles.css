@@ -95,8 +95,3 @@ select:disabled {
     z-index: 1;
 }
 
-.toggle input:focus + label {
-    outline: dotted 1px #ccc;
-	outline-offset: 0.45rem;
-}
-

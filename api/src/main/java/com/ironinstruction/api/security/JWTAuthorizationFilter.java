@@ -97,6 +97,10 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
                                 if (program.getAthleteEmail().equals(userEmail)) {
                                     if (request.getMethod().equals("POST")) {
                                         throw new AccessDenied("Only coaches can create new resources");
+                                    } else if (request.getMethod().equals("DELETE")) {
+                                        throw new AccessDenied("Only coaches can delete resources");
+                                    } else if (request.getMethod().equals("PUT")) {
+                                        throw new AccessDenied("Only coaches can put new resources");
                                     }
                                 } else {
                                     throw new AccessDenied("Account doesn't have permission to access requested resource");

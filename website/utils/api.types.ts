@@ -53,8 +53,6 @@ export interface Day {
 export interface Exercise {
     id: string
     name: string
-    coachNotes: string
-    athleteNotes: String
     videoRef: string
     sets: Set[]
 }
@@ -73,8 +71,6 @@ export interface Set {
     percentageReference: PercentageOptions,
     weight: number,
     rpe: number,
-    coachNotes: string,
-    athleteNotes: string,
     videoRef: string,
     videoRequested: boolean
 }

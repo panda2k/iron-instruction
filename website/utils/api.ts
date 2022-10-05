@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import { NeedLogin } from "./api.errors";
-import { ErrorResponse, Program, User, UserType } from "./api.types";
+import { ApiError, NeedLogin } from "./api.errors";
+import { ErrorResponse, Exercise, PercentageOptions, Program, User, UserType } from "./api.types";
 
 class Api {
     private client: AxiosInstance
@@ -31,6 +31,8 @@ class Api {
                 throw new NeedLogin("Need new login")
             } else if (originalRequest.url?.match("refreshtoken")) { // failed to refresh token
                 throw new NeedLogin("Need new login")
+            } else if (errorMessage) {
+                throw new ApiError(errorMessage.message, error.response!.status)
             } else {
                 return Promise.reject(error)
             }
@@ -95,10 +97,22 @@ class Api {
         return (await this.client.get(`/programs/${programId}`)).data as unknown as Program
     }
 
+    public async assignProgram(programId: string, athleteEmail: string): Promise<Program> {
+        return (await this.client.post(`programs/${programId}/assign`, {
+            email: athleteEmail
+        })).data as unknown as Program
+    }
+
     public async createWeek(programId: string, notes: string): Promise<Program> {
         return (await this.client.post(`/programs/${programId}/weeks`, {
             note: notes
         })).data as unknown as Program
+    }
+
+    public async deleteWeek(programId: string, weekId: string): Promise<Program> {
+        return (await this.client.delete(
+            `/programs/${programId}/weeks/${weekId}`
+        )).data as unknown as Program
     }
 
     public async updateWeekCoachNote(programId: string, weekId: string, notes: string): Promise<Program> {
@@ -120,6 +134,12 @@ class Api {
         )).data as unknown as Program
     }
 
+    public async deleteDay(programId: string, weekId: string, dayId: string): Promise<Program> {
+        return (await this.client.delete(
+            `programs/${programId}/weeks/${weekId}/days/${dayId}`)
+        ).data as unknown as Program
+    }
+
     public async updateDayCoachNote(programId: string, weekId: string, dayId: string, notes: string): Promise<Program> {
         return (await this.client.post(`programs/${programId}/weeks/${weekId}/days/${dayId}/notes`, {
             note: notes
@@ -129,6 +149,38 @@ class Api {
     public async updateDayAthleteNote(programId: string, weekId: string, dayId: string, notes: string): Promise<Program> {
         return (await this.client.patch(`programs/${programId}/weeks/${weekId}/days/${dayId}/notes`, {
             note: notes
+        })).data as unknown as Program
+    }
+
+    public async createExercise(programId: string, weekId: string, dayId: string, name: string, videoRef: string): Promise<Program> {
+        return (await this.client.post(`programs/${programId}/weeks/${weekId}/days/${dayId}/exercises`, {
+            name: name,
+            videoRef: videoRef
+        })).data as unknown as Program
+    }
+
+    public async createSet(programId: string, weekId: string, dayId: string, exerciseId: string, reps: number, rpe: number, percentage: number, weight: number, percentageReference: PercentageOptions, videoRequested: boolean): Promise<Program> {
+        return (await this.client.post(`programs/${programId}/weeks/${weekId}/days/${dayId}/exercises/${exerciseId}/sets`, {
+            reps: reps,
+            rpe: rpe,
+            percentage: percentage,
+            weight: weight,
+            percentageReference: percentageReference,
+            videoRequested: videoRequested
+        })).data as unknown as Program
+    }
+
+    public async updateExercise(programId: string, weekId: string, dayId: string, exerciseId: string, exercise: Exercise): Promise<Program> {
+        return (await this.client.put(`programs/${programId}/weeks/${weekId}/days/${dayId}/exercises/${exerciseId}`, exercise)).data as unknown as Program
+    }
+
+    public async deleteExercise(programId: string, weekId: string, dayId: string, exerciseId: string): Promise<Program> {
+        return (await this.client.delete(`programs/${programId}/weeks/${weekId}/days/${dayId}/exercises/${exerciseId}`)).data as unknown as Program
+    }
+
+    public async finishSet(programId: string, weekId: string, dayId: string, exerciseId: string, setId: string, repsCompleted: number): Promise<Program> {
+        return (await this.client.patch(`programs/${programId}/weeks/${weekId}/days/${dayId}/exercises/${exerciseId}/sets/${setId}`, {
+            repsDone: repsCompleted
         })).data as unknown as Program
     }
 

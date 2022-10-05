@@ -1,4 +1,3 @@
-import { randomBytes } from "crypto"
 import { NextPage } from "next"
 import { useEffect } from "react"
 
@@ -21,7 +20,7 @@ class AccordionAnimationHandler {
         this.summary = el.querySelector(`.summary-${identifier}`) as HTMLElement
         this.content = el.querySelector(`.content-${identifier}`) as HTMLDivElement
         this.chevron = el.querySelector(`.summary-${identifier} > svg`) as SVGElement
-        this.header = el.querySelector(`.summary-${identifier} > span`) as HTMLSpanElement
+        this.header = el.querySelector(`.summary-${identifier} span`) as HTMLSpanElement
         this.chevronAnimation = null
         this.headerAnimation = null
         this.animation = null
@@ -136,7 +135,7 @@ class AccordionAnimationHandler {
 }
 
 type Props = {
-    items: { heading: string, body: React.ReactElement }[],
+    items: { conditionalClick?: Function, headerExtras?: React.ReactElement, heading: string, body: React.ReactElement }[],
     animationTime: number,
     loaded: boolean
 }
@@ -149,17 +148,17 @@ const Accordion: NextPage<Props> = (props: Props) => {
     }
 
     useEffect(() => {
-        document.querySelectorAll(`#${id} > details`).forEach((el) => {
+        document.querySelectorAll(`#${id} > div > details`).forEach((el) => {
             const element = el as HTMLDetailsElement
 
             new AccordionAnimationHandler(element, props.animationTime, id)
         })
-    }, [])
+    }, [props.items])
 
     useEffect(() => {
         let maxWidth: number = 0
 
-        document.querySelectorAll(`#${id} > details`).forEach((el) => { 
+        document.querySelectorAll(`#${id} > div > details`).forEach((el) => {
             const element = el as HTMLDetailsElement
             element.open = true
             const nestedElementList: HTMLDetailsElement[] = []
@@ -171,15 +170,11 @@ const Accordion: NextPage<Props> = (props: Props) => {
                     nestedElementList.push(nestedElement)
                 }
             } while (nestedElement != null)
-            if (nestedElementList.length != 0) {
-                nestedElementList.at(-1)!.style.width = `${nestedElementList.at(-1)!.offsetWidth + 1}px` 
-            }
             maxWidth = maxWidth < element.offsetWidth ? element.offsetWidth : maxWidth
             nestedElementList.forEach(element => element.removeAttribute("open"))
 
             el.removeAttribute("open")
         })
-        console.log(maxWidth)
         const container = document.querySelector(`#${id}`) as HTMLDivElement
         if (maxWidth != 0) {
             container.style.width = `${maxWidth + 1}px` // add 1 to account for decimal px
@@ -189,19 +184,24 @@ const Accordion: NextPage<Props> = (props: Props) => {
     return (
         <div id={id} className="divide-black divide-opacity-40 divide-y">
             {
-                props.items.map(item => {
+                props.items.map((item, index) => {
                     return (
-                        <details className="mb-2">
-                            <summary className={`summary-${id} cursor-pointer pt-2 select-none flex justify-between items-center flex-row`}>
-                                <span className="fancy-underline mr-12 font-medium ">{item.heading}</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mt-0.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                </svg>
-                            </summary>
-                            <div className={`content-${id}`}>
-                                {item.body}
-                            </div>
-                        </details>
+                        <div key={index} className="mb-2 flex">
+                            {item.headerExtras && item.headerExtras}
+                            <details className="w-full" onClick={() => item.conditionalClick ? item.conditionalClick() : () => { }}>
+                                <summary className={`summary-${id} cursor-pointer pt-2 select-none flex justify-between items-center flex-row`}>
+                                    <div className="flex">
+                                        <span className="fancy-underline mr-12 font-medium ">{item.heading}</span>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mt-0.5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                    </svg>
+                                </summary>
+                                <div className={`content-${id}`}>
+                                    {item.body}
+                                </div>
+                            </details>
+                        </div>
                     )
                 })
             }

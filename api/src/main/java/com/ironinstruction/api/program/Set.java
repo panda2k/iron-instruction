@@ -6,7 +6,6 @@ import org.springframework.data.annotation.Id;
 public class Set {
     @Id
     private String id;
-
     private int reps;
     private int completedReps;
     private float percentage;
@@ -16,7 +15,9 @@ public class Set {
     private String videoRef;
     private boolean videoRequested;
 
-    public Set() { }
+    public Set() { 
+        this.id = new ObjectId().toString();
+    }
 
     public Set(int reps, float percentage, PercentageOptions percentageReference, boolean videoRequested) {
         this.id = new ObjectId().toString();
@@ -24,13 +25,21 @@ public class Set {
         this.percentage = percentage;
         this.percentageReference = percentageReference;
         this.videoRequested = videoRequested;
+        this.completedReps = -1;
     }
 
-    public Set(float rpe, float weight, boolean videoRequested) {
+    public Set(float rpe, int reps, float weight, boolean videoRequested) {
         this.id = new ObjectId().toString();
         this.rpe = rpe;
+        this.reps = reps;
         this.weight = weight;
         this.videoRequested = videoRequested;
+        this.completedReps = -1;
+    }
+
+    public String generateId() {
+        this.id = new ObjectId().toString();
+        return this.id;
     }
 
     public String getId() {

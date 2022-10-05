@@ -57,9 +57,34 @@ public class ProgramService {
         return programRepository.save(program);
     }
 
+    public Program deleteWeek(String programId, String weekId) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        ArrayList<Week> weeks = program.getWeeks();
+        for (int i = 0; i < weeks.size(); i++) {
+            if (weeks.get(i).getId().equals(weekId)) {
+                weeks.remove(i); 
+            }
+        }
+
+        return programRepository.save(program);
+    }
+
     public Program addDay(String programId, String weekId, String coachNotes) throws ResourceNotFound {
         Program program = this.findById(programId);
         program.findWeekById(weekId).addDay(new Day(coachNotes)); 
+
+        return programRepository.save(program);
+    }
+
+    public Program deleteDay(String programId, String weekId, String dayId) throws ResourceNotFound{
+        Program program = this.findById(programId); 
+        ArrayList<Day> days = program.findWeekById(weekId).getDays();
+
+        for (int i = 0; i < days.size(); i++) {
+            if (days.get(i).getId().equals(dayId)) {
+                days.remove(i);
+            }
+        }
 
         return programRepository.save(program);
     }
@@ -80,9 +105,9 @@ public class ProgramService {
         return programRepository.save(program);
     }
 
-    public Program addSet(String programId, String weekId, String dayId, String exerciseId, float rpe, float weight, boolean videoRequested) throws ResourceNotFound {
+    public Program addSet(String programId, String weekId, String dayId, String exerciseId, float rpe, int reps, float weight, boolean videoRequested) throws ResourceNotFound {
         Program program = this.findById(programId);
-        Set set = new  Set(rpe, weight, videoRequested);
+        Set set = new Set(rpe, reps, weight, videoRequested);
         program.findWeekById(weekId).findDayById(dayId).findExerciseById(exerciseId).addSet(set);
         
         return programRepository.save(program);
@@ -96,12 +121,25 @@ public class ProgramService {
         return programRepository.save(program);
     }
 
-    public Program updateDay(String programId, String weekId, String dayId, Day day) throws ResourceNotFound {
+    public Program deleteExercise(String programId, String weekId, String dayId, String exerciseId) throws ResourceNotFound {
         Program program = this.findById(programId);
-        ArrayList<Day> days = program.findWeekById(weekId).getDays();
-        for (int i = 0; i < days.size(); i++) {
-            if (days.get(i).getId().equals(dayId)) {
-                days.set(i, day);
+        ArrayList<Exercise> exercises = program.findWeekById(weekId).findDayById(dayId).getExercises();
+        for (int i = 0; i < exercises.size(); i++) {
+            if (exercises.get(i).getId().equals(exerciseId)) {
+                exercises.remove(i);
+                return programRepository.save(program);
+            }
+        }
+
+        throw new ResourceNotFound(dayId);
+    }
+
+    public Program updateExercise(String programId, String weekId, String dayId, Exercise exercise) throws ResourceNotFound {
+        Program program = this.findById(programId);
+        ArrayList<Exercise> exercises = program.findWeekById(weekId).findDayById(dayId).getExercises();
+        for (int i = 0; i < exercises.size(); i++) {
+            if (exercises.get(i).getId().equals(exercise.getId())) {
+                exercises.set(i, exercise);
                 return programRepository.save(program);
             }
         }

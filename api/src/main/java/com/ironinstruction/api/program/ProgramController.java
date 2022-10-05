@@ -18,10 +18,12 @@ import com.ironinstruction.api.user.UserType;
 import com.ironinstruction.api.utils.AwsS3Manager;
 
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -69,10 +71,13 @@ public class ProgramController {
 
     @PostMapping("/{programId}/assign")
     public Program assignProgram(@PathVariable String programId, @RequestBody AssignProgramRequest request) throws ResourceNotFound, InvalidRequest {
-        User user = userService.findByEmail(request.getEmail());
-        if (user.getUserType().equals(UserType.COACH)) {
-            throw new InvalidRequest("Cannot assign program to coach");
-        }
+        if (!request.getEmail().isBlank()) {
+            User user = userService.findByEmail(request.getEmail());
+            if (user.getUserType().equals(UserType.COACH)) {
+                throw new InvalidRequest("Cannot assign program to coach");
+            }
+        } 
+
         return programService.assignProgram(
             programId,
             request.getEmail()
@@ -83,7 +88,12 @@ public class ProgramController {
     public Program createWeek(@PathVariable String programId, @RequestBody NoteRequest request) throws ResourceNotFound {
         return programService.addWeek(programId, request.getNote());
     }
-  
+
+    @DeleteMapping("/{programId}/weeks/{weekId}")
+    public Program deleteWeek(@PathVariable String programId, @PathVariable String weekId) throws ResourceNotFound {
+        return programService.deleteWeek(programId, weekId);  
+    }
+
     @PostMapping("/{programId}/weeks/{weekId}/notes")
     public Program updateWeekCoachNotes(@PathVariable String programId, @PathVariable String weekId, @RequestBody NoteRequest request) throws ResourceNotFound {
         return programService.updateWeekCoachNote(programId, weekId, request.getNote());
@@ -99,9 +109,9 @@ public class ProgramController {
         return programService.addDay(programId, weekId, request.getNote());
     }
 
-    @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/update")
-    public Program updateDay(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @RequestBody Day day) throws ResourceNotFound {
-        return programService.updateDay(programId, weekId, dayId, day);    
+    @DeleteMapping("/{programId}/weeks/{weekId}/days/{dayId}")
+    public Program deleteDay(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId) throws ResourceNotFound {
+        return programService.deleteDay(programId, weekId, dayId);
     }
 
     @PatchMapping("/{programId}/weeks/{weekId}/days/{dayId}/notes")
@@ -115,8 +125,32 @@ public class ProgramController {
     }
 
     @PostMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises")
-    public Program createExercise(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @RequestBody CreateExerciseRequest request) throws ResourceNotFound {
+    public Program createExercise(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @RequestBody CreateExerciseRequest request) throws ResourceNotFound, InvalidRequest {
+        if (request.getName().isBlank()) {
+            throw new InvalidRequest("Exercise name must not be blank");
+        }
+
         return programService.addExercise(programId, weekId, dayId, request.getName(), request.getVideoRef());
+    }
+
+    @PutMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}")
+    public Program updateExercise(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @RequestBody Exercise request) throws ResourceNotFound, InvalidRequest {
+        if (request.getName().isBlank()) {
+            throw new InvalidRequest("Exercise name must not be blank");
+        }
+
+        request.getSets().forEach(set -> {
+            if (set.getId().isBlank()) {
+                set.generateId();   
+            }
+        });
+
+        return programService.updateExercise(programId, weekId, dayId, request);
+    }
+
+    @DeleteMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}")
+    public Program deleteExercise(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId) throws ResourceNotFound {
+        return programService.deleteExercise(programId, weekId, dayId, exerciseId);
     }
 
     @GetMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/video") 
@@ -135,9 +169,10 @@ public class ProgramController {
         if (existingKey != null && existingKey.length() != 0) {
             this.s3Manager.deleteObject(existingKey);
         }
-        String key = exerciseId+ ".mp4"; 
+        String key = exerciseId + ".mp4"; 
         String videoLink = this.s3Manager.newPresignedPutUrl(key);
         programService.assignExerciseVideoUrl(programId, weekId, dayId, exerciseId, key);
+
         return new VideoLinkResponse(videoLink);
     }
 
@@ -162,6 +197,7 @@ public class ProgramController {
                 dayId,
                 exerciseId,
                 request.getRpe(),
+                request.getReps(),
                 request.getWeight(),
                 request.getVideoRequested()
             );
@@ -169,7 +205,7 @@ public class ProgramController {
     }
 
     @PatchMapping("/{programId}/weeks/{weekId}/days/{dayId}/exercises/{exerciseId}/sets/{setId}")
-    public Program updateSet(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @PathVariable String setId, @RequestBody FinishSetRequest request) throws ResourceNotFound {
+    public Program finishSet(@PathVariable String programId, @PathVariable String weekId, @PathVariable String dayId, @PathVariable String exerciseId, @PathVariable String setId, @RequestBody FinishSetRequest request) throws ResourceNotFound {
         return programService.updateSet(programId, weekId, dayId, exerciseId, setId, request.getRepsDone());
     }
 

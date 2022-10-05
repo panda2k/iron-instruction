@@ -215,7 +215,7 @@ const Dashboard: NextPage = () => {
                                     :
                                     <div>
                                         {
-                                            <Accordion animationTime={200} items={generateAccordionContent()} loaded={loading}/>
+                                            <Accordion animationTime={200} items={generateAccordionContent()} loaded={loading} />
                                         }
                                     </div>
                             }
