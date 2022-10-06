@@ -1,4 +1,5 @@
 import { NextPage } from "next";
+import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -81,6 +82,9 @@ const ProgramPage: NextPage = () => {
 
     return (
         <div className="w-100 flex flex-col">
+            <Head>
+                <title>{program?.name || "Iron Instruction Program"}</title>
+            </Head>
             <NavBar loading={loading} />
             {
                 (!loading && program) &&

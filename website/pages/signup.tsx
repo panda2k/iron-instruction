@@ -1,5 +1,6 @@
 import { AxiosError } from "axios";
 import { NextPage } from "next";
+import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
 import Logo from "../components/Logo";
@@ -54,6 +55,9 @@ const SignUp: NextPage = () => {
 
     return (
         <div className="flex-col justify-center items-center h-full">
+            <Head>
+                <title>Sign Up</title>
+            </Head>
             <div className="h-full flex items-center justify-center flex-col w-fit m-auto">
                 <form className="w-fit flex rounded-md flex-col justify-center items-center border border-black pt-12 pb-8 px-8" onSubmit={submitSignup}>
                     <Logo />

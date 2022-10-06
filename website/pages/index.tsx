@@ -1,4 +1,5 @@
 import type { NextPage } from 'next'
+import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import NavBar from '../components/NavBar'
@@ -27,6 +28,9 @@ const Home: NextPage = () => {
 
     return (
         <div className="flex flex-col h-full w-full">
+            <Head>
+                <title>Iron Instruction</title>
+            </Head>
             <NavBar loading={loading} />
             <div className="flex flex-col h-full justify-center align-middle">
                 <h1 className='text-8xl mb-5 font-extrabold text-center'>Strength Coaching <br />Made Simple</h1>

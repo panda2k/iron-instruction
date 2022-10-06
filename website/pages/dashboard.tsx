@@ -1,4 +1,5 @@
 import { NextPage } from "next";
+import Head from "next/head";
 import { useEffect, useState } from "react";
 import Accordion from "../components/Accordion";
 import CreateProgram from "../components/CreateProgram";
@@ -123,6 +124,9 @@ const Dashboard: NextPage = () => {
 
     return (
         <div className="w-100 flex flex-col">
+            <Head>
+                <title>Dashboard</title>
+            </Head>
             <NavBar loading={loading} />
             {
                 !loading && (
