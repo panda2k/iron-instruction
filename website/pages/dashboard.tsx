@@ -116,7 +116,7 @@ const Dashboard: NextPage = () => {
         return programs.map((program) => {
             return {
                 heading: program.name,
-                body: <ProgramQuickview program={program} />
+                body: <ProgramQuickview userType={user!.userType} program={program} />
             }
         })
     }
@@ -222,7 +222,9 @@ const Dashboard: NextPage = () => {
                             {user!.userType == UserType.COACH &&
                                 <div className="w-full border-t-black border-opacity-40 border-t">
                                     <button onClick={() => setModalOpen(true)} type="button" className="purple-bg rounded-md px-6 py-1 text-white w-full mt-4">Create Program</button>
-                                    <Modal children={<CreateProgram cancelHandler={() => setModalOpen(false)} />} open={modalOpen} setOpen={setModalOpen} />
+                                    <Modal open={modalOpen} setOpen={setModalOpen}>
+                                        <CreateProgram cancelHandler={() => setModalOpen(false)}></CreateProgram>
+                                    </Modal>
                                 </div>
                             }
                         </div>

@@ -1,4 +1,5 @@
 import type { NextPage } from 'next'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import NavBar from '../components/NavBar'
 import { useUserContext } from '../context/UserContext'
@@ -29,10 +30,12 @@ const Home: NextPage = () => {
             <NavBar loading={loading} />
             <div className="flex flex-col h-full justify-center align-middle">
                 <h1 className='text-8xl mb-5 font-extrabold text-center'>Strength Coaching <br />Made Simple</h1>
-                <h2 className='text-2xl text-gray-500 text-center'>It's time to ditch the Excel sheets and create intuitive programs without the boilerplate.</h2>
-                <a className="flex justify-center mt-12" href="/signup">
-                    <button className="purple-bg text-lg py-2 px-16 rounded-md text-white">Get Started</button>
-                </a>
+                <h2 className='text-2xl text-gray-500 text-center'>It&#39;s time to ditch the Excel sheets and create intuitive programs without the boilerplate.</h2>
+                <div className="flex justify-center w-full mt-8">
+                    <Link href="/signup">
+                        <button className="purple-bg text-lg py-2 px-16 rounded-md text-white w-fit">Get Started</button>
+                    </Link>
+                </div>
             </div>
         </div >
     )

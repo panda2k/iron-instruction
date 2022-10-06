@@ -7,7 +7,7 @@ class Api {
 
     constructor() {
         this.client = axios.create({
-            baseURL: "http://localhost:8080/api/v1",
+            baseURL: process.env.API_URL || "http://localhost:8080/api/v1",
             responseType: "json",
             withCredentials: true
         })

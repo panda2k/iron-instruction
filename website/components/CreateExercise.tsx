@@ -200,10 +200,10 @@ const CreateExercise: NextPage<Props> = (props: Props) => {
                     </div>
                     {createSetFormOpen &&
                         <form className="w-fit flex rounded-md flex-col justify-center items-center border border-black py-6 px-8 mt-3" onSubmit={saveSet}>
-                            <div className="w-full toggle" onChange={handleSetChange}>
-                                <input type="radio" name="type" value="RPE" id="rpeToggle" />
+                            <div className="w-full toggle">
+                                <input type="radio" name="type" value="RPE" id="rpeToggle" onChange={handleSetChange} />
                                 <label htmlFor="rpeToggle">RPE</label>
-                                <input type="radio" name="type" value="PERCENTAGE" id="percentageToggle" defaultChecked />
+                                <input type="radio" name="type" value="PERCENTAGE" id="percentageToggle" defaultChecked onChange={handleSetChange} />
                                 <label htmlFor="percentageToggle">Percentage</label>
                             </div>
                             <div className="flex flex-col">
@@ -262,7 +262,7 @@ const CreateExercise: NextPage<Props> = (props: Props) => {
                     {
                         exercise.sets.map((set, index) => {
                             return (
-                                <div className="flex flex-row w-full justify-center">
+                                <div key={index} className="flex flex-row w-full justify-center">
                                     {
                                         editing &&
                                         <div className="flex-1">
@@ -297,7 +297,9 @@ const CreateExercise: NextPage<Props> = (props: Props) => {
 
 
     return (
-        <Modal children={modalContent()} open={props.open} setOpen={props.setOpen} />
+        <Modal open={props.open} setOpen={props.setOpen} >
+            {modalContent()}
+        </Modal>
     )
 }
 

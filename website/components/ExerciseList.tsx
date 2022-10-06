@@ -280,10 +280,16 @@ const ExerciseList: NextPage<Props> = (props: Props) => {
                                 )
                             })
                         }
-                        <Modal open={exerciseRepEditing} setOpen={setExerciseRepEditing} children={generateEditRepContent()} />
-                        <Modal open={viewVideoModalOpen} setOpen={setViewVideoModalOpen} children={generateVideoModalContent()} />
-                        <Modal open={fileUploadModalOpen} setOpen={setFileUploadModalOpen} children={generateUploadModalContent()} />
-                    </div>
+                        <Modal open={exerciseRepEditing} setOpen={setExerciseRepEditing} >
+                            {generateEditRepContent()}
+                        </Modal>
+                        <Modal open={viewVideoModalOpen} setOpen={setViewVideoModalOpen} >
+                            {generateVideoModalContent()}
+                        </Modal>
+                        <Modal open={fileUploadModalOpen} setOpen={setFileUploadModalOpen} >
+                            {generateUploadModalContent()}
+                        </Modal>
+                    </div >
                 ),
                 ...(editing) && {
                     headerExtras: (
