@@ -31,7 +31,6 @@ class AccordionAnimationHandler {
 
     onClick(e: Event) {
         e.preventDefault()
-        // Add an overflow on the <details> to avoid content overflowing
         this.el.style.overflow = 'hidden'
         if (this.isClosing || !this.el.open) {
             this.open()
@@ -153,19 +152,27 @@ const Accordion: NextPage<Props> = (props: Props) => {
 
             new AccordionAnimationHandler(element, props.animationTime, id)
         })
-    }, [props.items])
+        console.log(props.items.flat())
+    }, [props.items.flat().length])
 
     useEffect(() => {
         let maxWidth: number = 0
 
         document.querySelectorAll(`#${id} > div > details`).forEach((el) => {
+            const openedElements: HTMLDetailsElement[] = []
             const element = el as HTMLDetailsElement
+            if (element.open) {
+                openedElements.push(element)
+            }
             element.open = true
             const nestedElementList: HTMLDetailsElement[] = []
             let nestedElement: HTMLDetailsElement | null = element
             do {
                 nestedElement = nestedElement.querySelector("details") as HTMLDetailsElement
                 if (nestedElement) {
+                    if (nestedElement.open) {
+                        openedElements.push(nestedElement)
+                    }
                     nestedElement.open = true
                     nestedElementList.push(nestedElement)
                 }
@@ -174,12 +181,16 @@ const Accordion: NextPage<Props> = (props: Props) => {
             nestedElementList.forEach(element => element.removeAttribute("open"))
 
             el.removeAttribute("open")
+
+            openedElements.forEach(element => {
+                element.open = true
+            })
         })
         const container = document.querySelector(`#${id}`) as HTMLDivElement
         if (maxWidth != 0) {
-            container.style.width = `${maxWidth + 1}px` // add 1 to account for decimal px
+            container.style.minWidth = `${maxWidth + 1}px` // add 1 to account for decimal px
         }
-    }, [props.loaded])
+    }, [props.loaded, props.items.flat().length])
 
     return (
         <div id={id} className="divide-black divide-opacity-40 divide-y">
@@ -187,7 +198,9 @@ const Accordion: NextPage<Props> = (props: Props) => {
                 props.items.map((item, index) => {
                     return (
                         <div key={index} className="mb-2 flex">
-                            {item.headerExtras && item.headerExtras}
+                            <div>
+                                {item.headerExtras && item.headerExtras}
+                            </div>
                             <details className="w-full" onClick={() => item.conditionalClick ? item.conditionalClick() : () => { }}>
                                 <summary className={`summary-${id} cursor-pointer pt-2 select-none flex justify-between items-center flex-row`}>
                                     <div className="flex">

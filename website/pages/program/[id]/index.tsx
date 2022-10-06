@@ -83,12 +83,12 @@ const ProgramPage: NextPage = () => {
     return (
         <div className="w-100 flex flex-col">
             <Head>
-                <title>{program?.name || "Iron Instruction Program"}</title>
+                <title>{program?.name || "Loading..."}</title>
             </Head>
             <NavBar loading={loading} />
             {
                 (!loading && program) &&
-                <div className="flex flex-col ">
+                <div className="flex flex-col">
                     <div className="flex flex-col items-center">
                         <h1 className="text-3xl w-fit font-medium border-b-black border-b-2 pb-0.5 px-1">{program!.name}</h1>
                         <h2 className="text-xl w-fit">{program.description}</h2>

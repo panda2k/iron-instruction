@@ -161,7 +161,7 @@ const WeekList: NextPage<Props> = (props: Props) => {
         })
     }
     return (
-        <div className="w-fit">
+        <div className="w-fit min-w-[40%]">
             <div className={"flex flex-row items-end border-b border-b-black pb-1" + (props.userType == UserType.COACH ? " justify-between" : " justify-center")}>
                 {props.userType == UserType.COACH &&
                     <button onClick={() => setEditingWeeks(!editingWeeks)} className="hover:cursor-pointer">
