@@ -6,6 +6,7 @@ import { useState } from "react";
 import Logo from "../components/Logo";
 import { useUserContext } from "../context/UserContext";
 import Api from '../utils/api'
+import { ApiError } from "../utils/api.errors";
 import { ErrorResponse, User, UserType } from "../utils/api.types";
 
 const SignUp: NextPage = () => {
@@ -16,7 +17,7 @@ const SignUp: NextPage = () => {
         accountType: 'COACH'
     })
 
-    const { user, setUser } = useUserContext()
+    const { setUser } = useUserContext()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
@@ -34,10 +35,9 @@ const SignUp: NextPage = () => {
             setUser(userInfo)
             window.location.href = "/"
         } catch (error) {
-            if (error instanceof AxiosError && error.response) {
-                if (error.response.data) {
-                    const errorMessage: string = (error.response.data as unknown as ErrorResponse).message
-                    if (errorMessage.includes("already exists")) {
+            if (error instanceof ApiError) {
+                if (error.message) {
+                    if (error.message.includes("already exists")) {
                         setError(`Account with email ${input.email} already exists`)
                     } else {
                         setError("Unexpected error. Please try again")

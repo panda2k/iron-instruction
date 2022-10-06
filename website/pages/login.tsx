@@ -6,6 +6,7 @@ import { useState } from "react";
 import Logo from "../components/Logo";
 import { useUserContext } from "../context/UserContext";
 import Api from '../utils/api'
+import { ApiError } from "../utils/api.errors";
 import { ErrorResponse, User } from "../utils/api.types";
 
 const Login: NextPage = () => {
@@ -31,16 +32,11 @@ const Login: NextPage = () => {
             setUser(userInfo)
             window.location.href = "/dashboard"
         } catch (error) {
-            if (error instanceof AxiosError && error.response) {
-                if (error.response.data) {
-                    const errorMessage: string = (error.response.data as unknown as ErrorResponse).message
-                    if (errorMessage.includes("Incorrect password")) {
-                        setError("Incorrect password")
-                    } else if (errorMessage.includes("No user found")) {
-                        setError(`No user found with the email ${input.email}`)
-                    } else {
-                        setError("Unexpected error. Please try again")
-                    }
+            if (error instanceof ApiError) {
+                if (error.message.includes("Incorrect password")) {
+                    setError("Incorrect password")
+                } else if (error.message.includes("No user found")) {
+                    setError(`No user found with email ${input.email}`)
                 } else {
                     setError("Unexpected error. Please try again")
                 }
