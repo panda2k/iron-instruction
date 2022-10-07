@@ -30,7 +30,11 @@ class GlobalErrorHandler extends Component<Props, State> {
             return (
                 <div>
                     <h1>Something unexpected happened</h1>
-                    <Link href="/"><p className="underline cursor-pointer">Return home</p></Link>
+                    <Link href="/">
+                        <a>
+                            <p className="underline cursor-pointer">Return home</p>
+                        </a>
+                    </Link>
                 </div>
             )
         } else {

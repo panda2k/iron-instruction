@@ -146,10 +146,11 @@ const ExerciseList: NextPage<Props> = (props: Props) => {
                     <h1 className="text-2xl mb-4 underline">Video Upload</h1>
                     {videoUploadError && <p className="bold underline text-lg text-red-500">{videoUploadError}</p>}
                     <form>
-                        <label>Video: </label>
-                        <input type="file" accept="video/*" onChange={handleFileChange} />
+                        <label className="rounded-md purple-bg text-white py-2 px-7 hover:cursor-pointer">Upload Video
+                            <input className="hidden" type="file" accept="video/*" onChange={handleFileChange} />
+                        </label>
                     </form>
-                    {video && <video className="max-h-72" controls={true} src={URL.createObjectURL(video)}></video>}
+                    {video && <video className="max-h-72 mt-5" controls={true} src={URL.createObjectURL(video)}></video>}
                 </div>
                 <div className="flex flex-row justify-end">
                     <input disabled={uploading} onClick={() => setFileUploadModalOpen(false)} type="button" value="Cancel" className="disabled:opacity-80 disabled:cursor-progress purple-bg mt-6 cursor-pointer py-1 px-6 rounded-md text-white mr-3" />

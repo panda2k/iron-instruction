@@ -6,6 +6,7 @@ import com.ironinstruction.api.program.ProgramService;
 import com.ironinstruction.api.refreshtoken.RefreshTokenService;
 import com.ironinstruction.api.user.UserService;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.boot.web.servlet.server.CookieSameSiteSupplier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,10 @@ public class WebSecurityConfig {
         registrationBean.addUrlPatterns("/api/*");
         registrationBean.setOrder(2);
         return registrationBean;
+    }
+    @Bean 
+    public CookieSameSiteSupplier aCookieSameSiteSupplier() {
+        return CookieSameSiteSupplier.ofNone();
     }
 
     @Bean

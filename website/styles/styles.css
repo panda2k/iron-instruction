@@ -19,6 +19,10 @@ details > summary {
   list-style: none;
 }
 
+input:disabled {
+    -webkit-text-fill-color: #000000;
+}
+
 details > summary::-webkit-details-marker {
   display: none;
 }
