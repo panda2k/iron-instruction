@@ -1,5 +1,5 @@
 # Iron Instruction: A Platform for Strength Coaches and Athletes
-Want to view the live site? Click [here](https://iron-instruction-b9s8cqp3x-panda2k.vercel.app).
+Want to view the live site? Click [here](https://iron-instruction.vercel.app).
 ## Overview
 Typically, strength coaches develop their training programs in spreadsheet applications
 like Excel and Google Sheets. However, using a spreadsheet program requires 
@@ -10,7 +10,7 @@ As a result, Iron Instruction was designed to help strength coaches develop trai
 programs in a more aesthetic and user friendly way. 
 
 ## Testing the Site
-Feel free to visit the [site](https://iron-instruction-b9s8cqp3x-panda2k.vercel.app)
+Feel free to visit the [site](https://iron-instruction.vercel.app)
 and test it your own way. However, if you'd like to interact with pre-setup user
 accounts, login with the following test accounts: 
 
