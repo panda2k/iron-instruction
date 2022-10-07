@@ -8,6 +8,7 @@ import Modal from "./Modal";
 import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg'
 import { NeedLogin } from "../utils/api.errors";
 import { useUserContext } from "../context/UserContext";
+import { setLazyProp } from "next/dist/server/api-utils";
 
 type Props = {
     userType: UserType,
@@ -125,12 +126,15 @@ const ExerciseList: NextPage<Props> = (props: Props) => {
             await Api.uploadVideo(uploadUrl, convertedVideo)
         } catch (error) {
             setVideoUploadError("Error when uploading video. Please try again later")
-
             setUploading(false)
             setVideo(null)
             ffmpeg.exit()
             return
         }
+
+        // get the latest program with the new video ref
+        const updatedProgram: Program = await Api.getProgram(props.programId)
+        props.setProgram(updatedProgram)
 
         setFileUploadModalOpen(false)
         setUploading(false)
