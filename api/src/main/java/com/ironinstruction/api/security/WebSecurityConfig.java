@@ -5,6 +5,8 @@ import java.util.Arrays;
 import com.ironinstruction.api.program.ProgramService;
 import com.ironinstruction.api.refreshtoken.RefreshTokenService;
 import com.ironinstruction.api.user.UserService;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.server.CookieSameSiteSupplier;
 import org.springframework.context.annotation.Bean;
@@ -58,7 +60,7 @@ public class WebSecurityConfig {
                 .logoutUrl("/api/v1/logout")
                 .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK))
                 .invalidateHttpSession(true)
-                .deleteCookies("accessToken", "refreshToken") 
+                .addLogoutHandler(new CustomLogoutHandler())
             );
 
         return http.build();
