@@ -9,7 +9,7 @@ type Props = {
 }
 
 const Dropdown: NextPage<Props> = (props: Props) => {
-    const { user, setUser } = useUserContext()
+    const { setUser } = useUserContext()
 
     const handleClick = () => {
         const dropdown = document.querySelector(`[aria-labelledby='menu-button']`) as HTMLElement
@@ -22,8 +22,8 @@ const Dropdown: NextPage<Props> = (props: Props) => {
 
     const handleLogout = async (e: React.FormEvent) => {
         e.preventDefault()
-        window.location.href = "/"
         await Api.logout()
+        window.location.href = "/"
         setUser(null)
     }
 
