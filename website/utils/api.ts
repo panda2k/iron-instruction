@@ -40,7 +40,7 @@ class Api {
     }
 
     public async logout(): Promise<AxiosResponse> {
-        return this.client.post("/logout")
+        return await this.client.post("/logout")
     }
 
     public async getNewTokens(): Promise<AxiosResponse> {

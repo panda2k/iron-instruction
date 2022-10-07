@@ -152,8 +152,7 @@ const Accordion: NextPage<Props> = (props: Props) => {
 
             new AccordionAnimationHandler(element, props.animationTime, id)
         })
-        console.log(props.items.flat())
-    }, [props.items.flat().length])
+    }, [props.items])
 
     useEffect(() => {
         let maxWidth: number = 0
