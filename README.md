@@ -1,5 +1,6 @@
 # Iron Instruction: A Platform for Strength Coaches and Athletes
 Want to view the live site? Click [here](https://iron-instruction.vercel.app).
+
 ## Overview
 Typically, strength coaches develop their training programs in spreadsheet applications
 like Excel and Google Sheets. However, using a spreadsheet program requires 
@@ -54,6 +55,13 @@ Iron Instruction's frontend is built with [NextJS](https://nextjs.org).
 I chose NextJS because it requires minimal boilerplate and setup 
 compared to Create React App. Next's preconfigured router, minimal configuration, 
 and out of the box TypeScript support made it an easy choice. 
+
+## API Testing
+The backend's security and CRUD methods are fully tested using JUnit 
+assertions and Spring Boot's Mock MVC. 
+
+Tests can be run with `mvn test`. Every time code is pushed to `main`, a
+Github action runs `mvn test`.
 
 ## Assets
 Website icons are provided by [Heroicons](https://heroicons.com)
