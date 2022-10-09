@@ -26,4 +26,4 @@ jobs:
               java-version: '17'
               distribution: 'temurin'
           - name: Test with Maven
-            run: mvn test
+            run: cd api && mvn test
