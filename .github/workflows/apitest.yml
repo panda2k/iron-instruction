@@ -1,9 +1,5 @@
 name: Test API
 on: [push]
-env:
-  APP_MONGO_USER: rootuser 
-  APP_MONGO_PASS: rootpass 
-  APP_MONGO_DB: ironinstruction 
 jobs:
     # Run tests
     test:
@@ -13,9 +9,8 @@ jobs:
             mongo:
                 image: mongo
                 env:
-                    MONGO_INITDB_ROOT_USERNAME: ${APP_MONGO_USER}
-                    MONGO_INITDB_ROOT_PASSWORD: ${APP_MONGO_PASS}
-                    MONGO_INITDB_DATABASE: ${APP_MONGO_DB}
+                  MONGO_INITDB_ROOT_USERNAME=rootuser
+                  MONGO_INITDB_ROOT_PASSWORD=rootpass
                 ports:
                     - 27017:27017
         steps:
