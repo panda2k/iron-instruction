@@ -9,8 +9,8 @@ jobs:
             mongo:
                 image: mongo
                 env:
-                  MONGO_INITDB_ROOT_USERNAME=rootuser
-                  MONGO_INITDB_ROOT_PASSWORD=rootpass
+                    MONGO_INITDB_ROOT_USERNAME=rootuser
+                    MONGO_INITDB_ROOT_PASSWORD=rootpass
                 ports:
                     - 27017:27017
         steps:
