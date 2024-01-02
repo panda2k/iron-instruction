@@ -1,5 +1,4 @@
 # Iron Instruction: A Platform for Strength Coaches and Athletes
-Want to view the live site? Click [here](https://iron-instruction.vercel.app).
 
 ## Overview
 Typically, strength coaches develop their training programs in spreadsheet applications
@@ -9,21 +8,6 @@ friendly.
 
 As a result, Iron Instruction was designed to help strength coaches develop training
 programs in a more aesthetic and user friendly way. 
-
-## Testing the Site
-Feel free to visit the [site](https://iron-instruction.vercel.app)
-and test it your own way. However, if you'd like to interact with pre-setup user
-accounts, login with the following test accounts: 
-
-#### Test Coach Account
-Email: `testcoach@gmail.com`
-
-Password: `password`
-
-#### Test Athlete Account
-Email: `testathlete@gmail.com`
-
-Password: `password`
 
 ## Authentication System
 Iron Instruction uses [JWTs](https://jwt.io) (JSON Web Tokens)
